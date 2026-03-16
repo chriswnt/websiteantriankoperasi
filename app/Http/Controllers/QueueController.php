@@ -9,33 +9,36 @@ use App\Models\Service;
 class QueueController extends Controller
 {
 
-   public function ambil()
-   {
-       $services = Service::all();
-       return view('ambil_antrian', compact('services'));
-   }
+    public function index()
+    {
+        $services = Service::all();
 
-   public function generate(Request $request)
-{
-
-    $service = Service::where('code',$request->service_code)->first();
-
-    if(!$service){
-        return back()->with('error','Service tidak ditemukan');
+        return view('ambil_antrian', compact('services'));
     }
 
-    $last = Queue::where('service_id',$service->id)->count() + 1;
+   public function store(Request $request)
+{
 
-    $number = $service->code . str_pad($last,3,'0',STR_PAD_LEFT);
+$service = Service::find($request->service_id);
 
-    Queue::create([
-        'number'=>$number,
-        'service_id'=>$service->id,
-        'status'=>'waiting'
-    ]);
+$lastQueue = Queue::where('service_id',$service->id)
+        ->latest()
+        ->first();
 
-    return back()->with('number',$number);
+$number = $lastQueue
+        ? intval(substr($lastQueue->queue_number,1)) + 1
+        : 1;
 
-}   
+$queueNumber = $service->code . str_pad($number,3,'0',STR_PAD_LEFT);
+
+Queue::create([
+'service_id'=>$service->id,
+'queue_number'=>$queueNumber,
+'status'=>'waiting'
+]);
+
+return redirect()->back()->with('number',$queueNumber);
+
+}
 
 }   

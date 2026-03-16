@@ -1,31 +1,36 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+
 use App\Http\Controllers\QueueController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OfficerController;
-use App\Http\Controllers\AdminController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\OfficerController;
 
-Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+
+Route::get('/', [DashboardController::class, 'index']);
+
+Route::get('/ambil', [QueueController::class, 'index']);
+Route::post('/ambil', [QueueController::class, 'store']);
+
+Route::get('/officer', [OfficerController::class, 'index']);
+Route::get('/call/{id}', [OfficerController::class, 'call']);
+Route::get('/done/{id}', [OfficerController::class, 'done']);
+
+Route::get('/login', [AuthController::class, 'loginForm']);
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/logout', [AuthController::class, 'logout']);
+Route::get('/logout', [AuthController::class, 'logout']);
+Route::get('/menu', function () {
+    Route::get('/ambil',[QueueController::class,'index']);
+Route::post('/ambil',[QueueController::class,'store']);
 
-Route::middleware('auth')->group(function () {
-    Route::get('/officer',[OfficerController::class,'index']);
-    Route::get('/officer-data',[OfficerController::class,'data']);
-    Route::post('/officer/start/{id}/{loket}',[OfficerController::class,'start']);
-    Route::post('/officer/finish/{id}',[OfficerController::class,'finish']);
+Route::get('/officer',[OfficerController::class,'index']);
+Route::get('/call/{id}',[OfficerController::class,'call']);
 
-    Route::get('/admin',[AdminController::class,'index']);
-    Route::post('/admin/services', [AdminController::class, 'storeService']);
-    Route::put('/admin/services/{service}', [AdminController::class, 'updateService']);
-    Route::delete('/admin/services/{service}', [AdminController::class, 'destroyService']);
-});
-
-Route::get('/', [DashboardController::class,'index']);
-
-Route::get('/ambil-antrian',[QueueController::class,'ambil']);
-Route::post('/generate-antrian',[QueueController::class,'generate']);
-
-Route::get('/queue-data',[DashboardController::class,'data']);
+Route::get('/',[DashboardController::class,'index']);
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\OfficerController;
+    return view('welcome');
+}); 

@@ -1,177 +1,254 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-<title>Dashboard Antrian</title>
+
+<title>Dashboard Antrean</title>
 
 <style>
+
 body{
 margin:0;
 font-family:Arial;
-background:#0f172a;
+background:#114338;
 color:white;
+overflow:hidden;
 }
 
+/* HEADER */
+
 .header{
-text-align:center;
-padding:15px;
-font-size:28px;
-background:#1e293b;
+background:#114338;
+color:#FBB03C;
+padding:25px 40px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+border-bottom:4px solid #FBB03C;
 }
+
+.bank-info h2{
+margin:0;
+color:#FBB03C;
+}
+
+/* MAIN */
 
 .container{
 display:flex;
-height:90vh;
+gap:25px;
+padding:25px 40px;
 }
+
+/* ANTRIAN UTAMA */
+
+.main-queue{
+background:#FBB03C;
+color:#114338;
+width:50%;
+text-align:center;
+padding:80px 40px;
+border-radius:15px;
+}
+
+.main-queue h2{
+font-size:40px;
+margin-bottom:10px;
+}
+
+.queue-number{
+font-size:200px;
+font-weight:bold;
+}
+
+.loket{
+font-size:40px;
+}
+
+/* VIDEO */
 
 .video{
-width:60%;
-padding:10px;
-}
-
-.queue{
-width:40%;
+width:50%;
 display:flex;
-flex-direction:column;
-gap:15px;
-padding:15px;
 }
 
-.service-section{
+.video iframe{
+width:100%;
+height:100%;
+min-height:420px;
+border-radius:15px;
+border:4px solid #FBB03C;
+}
+
+/* LOKET BAWAH */
+
+.loket-container{
+display:flex;
+gap:20px;
+padding:0 40px 40px 40px;
+}
+
+.loket-box{
 flex:1;
-}
-
-.service-title{
-font-size:24px;
-margin-bottom:10px;
+background:#114338;
+color:#FBB03C;
+padding:40px;
+border-radius:15px;
 text-align:center;
+border:3px solid #FBB03C;
 }
 
-.service-queues{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:10px;
+.loket-box h3{
+font-size:28px;
+margin:10px;
 }
 
-.box{
-background:#2563eb;
-border-radius:10px;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:40px;
-height:100px;
+.nomor{
+font-size:90px;
+font-weight:bold;
 }
 
-.teller .teller-petugas{
-display:flex;
-gap:15px;
-}
-
-.teller .petugas-section{
-flex:1;
-}
-
-.petugas-title{
-font-size:18px;
-margin-bottom:5px;
-text-align:center;
-}
-
-.teller .service-queues{
-grid-template-columns:1fr 1fr;
-gap:10px;
-}
 </style>
-
-<script>
-function loadQueue(){
-fetch('/queue-data')
-.then(res => res.json())
-.then(data => {
-updateService('teller-petugas1', data.teller_petugas1);
-updateService('teller-petugas2', data.teller_petugas2);
-updateService('pinjaman', data.pinjaman);
-updateService('admin', data.admin);
-});
-}
-
-function updateService(serviceType, queues){
-let container = document.getElementById(serviceType + '-queues');
-let html = "";
-queues.forEach(q => {
-html += `<div class="box">${q.number}</div>`;
-});
-container.innerHTML = html;
-}
-
-setInterval(loadQueue,1000);
-</script>
 
 </head>
 
 <body>
 
+<!-- HEADER -->
+
 <div class="header">
-DASHBOARD ANTRIAN
+
+<div class="bank-info">
+
+<h2>BANK MANDIRI</h2>
+
+<p>Jalan Ardan inten No.100, Bontang</p>
+
+<p>Telp: 0812457984526</p>
+
 </div>
+
+<div class="clock">
+
+<div id="jam"></div>
+<div id="tanggal"></div>
+
+</div>
+
+</div>
+
+
+<!-- MAIN -->
 
 <div class="container">
 
+<div class="main-queue">
+
+<h2>Antrian</h2>
+
+<div class="queue-number">
+{{ $queue->queue_number ?? '000' }}
+</div>
+
+<div class="loket">
+LOKET {{ $queue->loket_id ?? '-' }}
+</div>
+
+</div>
+
 <div class="video">
-<iframe width="100%" height="100%"
-src="https://www.youtube.com/embed/p6xX8feo5pw?autoplay=1&mute=1"
-frameborder="0"
+
+<iframe
+src="https://youtu.be/embed/3JAPQHauiHnJHMsZ"
 allowfullscreen>
 </iframe>
 </div>
 
-<div class="queue">
-
-<div class="service-section teller">
-<div class="service-title">TELLER</div>
-<div class="teller-petugas">
-<div class="petugas-section">
-<div class="petugas-title">Petugas 1</div>
-<div class="service-queues" id="teller-petugas1-queues">
-@foreach($tellerPetugas1 as $q)
-<div class="box">{{ $q->number }}</div>
-@endforeach
-</div>
-</div>
-<div class="petugas-section">
-<div class="petugas-title">Petugas 2</div>
-<div class="service-queues" id="teller-petugas2-queues">
-@foreach($tellerPetugas2 as $q)
-<div class="box">{{ $q->number }}</div>
-@endforeach
-</div>
-</div>
-</div>
 </div>
 
-<div class="service-section pinjaman">
-<div class="service-title">PINJAMAN</div>
-<div class="service-queues" id="pinjaman-queues">
-@foreach($pinjamanQueues as $q)
-<div class="box">{{ $q->number }}</div>
-@endforeach
-</div>
-</div>
 
-<div class="service-section admin">
-<div class="service-title">ADMIN</div>
-<div class="service-queues" id="admin-queues">
-@foreach($adminQueues as $q)
-<div class="box">{{ $q->number }}</div>
-@endforeach
-</div>
-</div>
+<!-- LOKET BAWAH -->
+
+<div class="loket-container">
+
+<div class="loket-box loket1">
+
+<h3>Antrian</h3>
+
+<div class="nomor">
+
+{{ $loket1->queue_number ?? '-' }}
 
 </div>
 
+<h3>LOKET 1</h3>
+
 </div>
+
+
+<div class="loket-box loket2">
+
+<h3>Antrian</h3>
+
+<div class="nomor">
+
+{{ $loket2->queue_number ?? '-' }}
+
+</div>
+
+<h3>LOKET 2</h3>
+
+</div>
+
+
+<div class="loket-box loket3">
+
+<h3>Antrian</h3>
+
+<div class="nomor">
+
+{{ $loket3->queue_number ?? '-' }}
+
+</div>
+
+<h3>LOKET 3</h3>
+
+</div>
+
+
+<div class="loket-box loket4">
+
+<h3>Antrian</h3>
+
+<div class="nomor">
+
+{{ $loket4->queue_number ?? '-' }}
+
+</div>
+
+<h3>LOKET 4</h3>
+
+</div>
+
+</div>
+
+
+<script>
+
+function updateClock(){
+
+const now = new Date();
+
+document.getElementById("jam").innerHTML =
+now.toLocaleTimeString();
+
+document.getElementById("tanggal").innerHTML =
+now.toLocaleDateString();
+
+}
+
+setInterval(updateClock,1000);
+
+</script>
 
 </body>
-
 </html>
