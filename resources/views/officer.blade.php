@@ -1,118 +1,120 @@
-<meta name="csrf-token" content="{{ csrf_token() }}">
-<h1>Officer Panel</h1>
+<!DOCTYPE html>
+<html>
+<head>
+<title>Officer</title>
 
-<div style="display:flex; gap:24px; align-items:flex-start;">
-    <div style="flex:1; padding:16px; border:1px solid #ccc; border-radius:8px;">
-        <h2>Menunggu (Waiting)</h2>
-        <div id="waiting-list" style="max-height:300px; overflow:auto; border:1px solid #ddd; padding:8px; border-radius:6px; background:#f8f9fa;"></div>
-    </div>
+<style>
+body{font-family:Arial;background:#f5f5f5;margin:0}
+.container{padding:20px}
 
-    <div style="flex:1; padding:16px; border:1px solid #ccc; border-radius:8px;">
-        <h2>Petugas 1</h2>
-        <p>Current: <strong id="current-1">{{ $current1?->number ?? '—' }}</strong></p>
-        <p>Elapsed: <strong id="elapsed-1">{{ $current1?->started_at ? '⏱ ' . now()->diffForHumans($current1->started_at, true) : '—' }}</strong></p>
-        <form id="finish-1" action="/officer/finish/{{ $current1?->id ?? 0 }}" method="POST" style="display:inline;">
-            @csrf
-            <button type="submit" id="finish-button-1" {{ $current1 ? '' : 'disabled' }}>Selesai</button>
-        </form>
-    </div>
+/* CARD */
+.cards{display:flex;gap:20px;margin-bottom:20px}
+.card{flex:1;background:white;padding:20px;border-radius:10px;text-align:center;box-shadow:0 2px 5px rgba(0,0,0,0.1)}
+.card h2{margin:0}
 
-    <div style="flex:1; padding:16px; border:1px solid #ccc; border-radius:8px;">
-        <h2>Petugas 2</h2>
-        <p>Current: <strong id="current-2">{{ $current2?->number ?? '—' }}</strong></p>
-        <p>Elapsed: <strong id="elapsed-2">{{ $current2?->started_at ? '⏱ ' . now()->diffForHumans($current2->started_at, true) : '—' }}</strong></p>
-        <form id="finish-2" action="/officer/finish/{{ $current2?->id ?? 0 }}" method="POST" style="display:inline;">
-            @csrf
-            <button type="submit" id="finish-button-2" {{ $current2 ? '' : 'disabled' }}>Selesai</button>
-        </form>
-    </div>
+/* LOKET */
+.loket-box{flex:1;background:white;padding:20px;border-radius:10px;text-align:center;box-shadow:0 2px 5px rgba(0,0,0,0.1)}
+
+/* TABLE */
+table{width:100%;background:white;border-radius:10px;border-collapse:collapse;overflow:hidden}
+td,th{padding:12px;text-align:center;border-bottom:1px solid #ddd}
+
+/* BUTTON */
+.btn{
+padding:6px 12px;
+border:none;
+border-radius:5px;
+cursor:pointer;
+}
+
+.btn-call{background:blue;color:white}
+.btn-done{background:green;color:white}
+.btn:disabled{background:gray;cursor:not-allowed}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- INFO ATAS -->
+<div class="cards">
+
+<div class="card">
+<h3>Jumlah Antrian</h3>
+<h2>{{ $total }}</h2>
 </div>
 
-<script>
-let lastWaiting = null;
+<div class="card">
+<h3>Antrian Sekarang</h3>
+<h2>{{ $current->queue_number ?? '-' }}</h2>
+</div>
 
-function formatElapsed(seconds) {
-    const min = Math.floor(seconds / 60);
-    const sec = seconds % 60;
-    return `⏱ ${min}m ${sec}s`;
-}
+<div class="card">
+<h3>Antrian Selanjutnya</h3>
+<h2>{{ $next->queue_number ?? '-' }}</h2>
+</div>
 
-function refreshOfficerData() {
-    fetch('/officer-data')
-        .then(res => res.json())
-        .then(data => {
-            // Waiting list
-            const waitingList = document.getElementById('waiting-list');
-            waitingList.innerHTML = '';
-            data.waiting.forEach(item => {
-                const div = document.createElement('div');
-                div.style.padding = '6px 8px';
-                div.style.marginBottom = '6px';
-                div.style.border = '1px solid #ccc';
-                div.style.borderRadius = '6px';
-                div.style.background = '#fff';
+<div class="card">
+<h3>Sisa Antrian</h3>
+<h2>{{ $remaining }}</h2>
+</div>
 
-                const time = new Date(item.created_at).toLocaleTimeString();
-                div.innerHTML = `<strong>⏳ ${item.number}</strong> <small>${time}</small>`;
+</div>
 
-                const btn1 = document.createElement('button');
-                btn1.style.marginLeft = '8px';
-                btn1.textContent = 'Mulai (Loket 1)';
-                btn1.onclick = () => {
-                    fetch(`/officer/start/${item.id}/1`, { method: 'POST', credentials: 'same-origin', headers: {'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } })
-                        .then(() => refreshOfficerData());
-                };
+<!-- LOKET -->
+<div class="cards">
 
-                const btn2 = document.createElement('button');
-                btn2.style.marginLeft = '4px';
-                btn2.textContent = 'Mulai (Loket 2)';
-                btn2.onclick = () => {
-                    fetch(`/officer/start/${item.id}/2`, { method: 'POST', credentials: 'same-origin', headers: {'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } })
-                        .then(() => refreshOfficerData());
-                };
+<div class="loket-box">LOKET 1<br><strong>{{ $loket1->queue_number ?? '-' }}</strong></div>
+<div class="loket-box">LOKET 2<br><strong>{{ $loket2->queue_number ?? '-' }}</strong></div>
+<div class="loket-box">LOKET 3<br><strong>{{ $loket3->queue_number ?? '-' }}</strong></div>
+<div class="loket-box">LOKET 4<br><strong>{{ $loket4->queue_number ?? '-' }}</strong></div>
 
-                div.appendChild(btn1);
-                div.appendChild(btn2);
+</div>
 
-                waitingList.appendChild(div);
-            });
+<!-- TABLE -->
+<h3>Panggil Antrian</h3>
 
-            // Notifikasi antrian baru
-            if (lastWaiting !== null && data.waiting.length > lastWaiting) {
-                alert('Ada antrian baru!');
-            }
-            lastWaiting = data.waiting.length;
+<table>
+<tr>
+<th>Nomor</th>
+<th>Status</th>
+<th>Aksi</th>
+</tr>
 
-            // Current process update
-            const current1 = data.current1;
-            const current2 = data.current2;
+@foreach($queues as $q)
+<tr>
+<td>{{ $q->queue_number }}</td>
+<td>{{ $q->status }}</td>
+<td>
 
-            document.getElementById('current-1').innerText = current1 ? current1.number : '—';
-            document.getElementById('current-2').innerText = current2 ? current2.number : '—';
+<!-- PANGGIL -->
+@if($q->status == 'waiting')
+<a href="{{ route('call', $q->id) }}">
+<button class="btn btn-call">Panggil</button>
+</a>
+@else
+<button class="btn" disabled>Panggil</button>
+@endif
 
-            const nowSeconds = Math.floor(Date.now() / 1000);
-            if (current1 && current1.started_at) {
-                const started = Math.floor(new Date(current1.started_at).getTime()/1000);
-                document.getElementById('elapsed-1').innerText = formatElapsed(nowSeconds - started);
-                document.getElementById('finish-button-1').disabled = false;
-                document.getElementById('finish-1').action = `/officer/finish/${current1.id}`;
-            } else {
-                document.getElementById('elapsed-1').innerText = '—';
-                document.getElementById('finish-button-1').disabled = true;
-            }
+<!-- SELESAI -->
+@if($q->status == 'called')
+<a href="{{ route('done', $q->id) }}">
+<button class="btn btn-done">Selesai</button>
+</a>
+@else
+<button class="btn" disabled>Selesai</button>
+@endif
 
-            if (current2 && current2.started_at) {
-                const started = Math.floor(new Date(current2.started_at).getTime()/1000);
-                document.getElementById('elapsed-2').innerText = formatElapsed(nowSeconds - started);
-                document.getElementById('finish-button-2').disabled = false;
-                document.getElementById('finish-2').action = `/officer/finish/${current2.id}`;
-            } else {
-                document.getElementById('elapsed-2').innerText = '—';
-                document.getElementById('finish-button-2').disabled = true;
-            }
-        });
-}
+</td>
+</tr>
+@endforeach
 
-setInterval(refreshOfficerData, 2000);
-refreshOfficerData();
-</script>
+</table>
+
+</div>
+
+</body>
+</html>

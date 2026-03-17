@@ -1,109 +1,160 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Admin Panel</title>
-    <style>
-        body { font-family: Arial; margin: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background: #f2f2f2; }
-        .status-waiting { color: orange; }
-        .status-called { color: blue; }
-        .status-done { color: green; }
-        form { margin-bottom: 20px; }
-        input, button { padding: 8px; margin: 5px 0; }
-        .edit-form { display: none; }
-    </style>
+<title>Admin Panel</title>
+
+<style>
+body{
+font-family:sans-serif;
+margin:0;
+display:flex;
+}
+
+/* SIDEBAR */
+.sidebar{
+width:220px;
+background:#114338;
+color:white;
+height:100vh;
+padding:20px;
+}
+
+.sidebar h2{
+color:#FBB03C;
+}
+
+.sidebar a{
+display:block;
+color:white;
+text-decoration:none;
+margin:10px 0;
+}
+
+/* CONTENT */
+.content{
+flex:1;
+padding:20px;
+background:#f5f5f5;
+}
+
+/* CARD */
+.card{
+background:white;
+padding:15px;
+margin-bottom:20px;
+border-radius:8px;
+}
+
+/* BUTTON */
+button{
+background:#FBB03C;
+border:none;
+padding:8px 12px;
+cursor:pointer;
+}
+
+/* INPUT */
+input, select{
+padding:8px;
+margin:5px 0;
+width:100%;
+}
+</style>
+
 </head>
+
 <body>
-    <h1>Admin Panel</h1>
-    <a href="/logout">Logout</a>
 
-    @if(session('success'))
-        <div style="color: green; margin-bottom: 10px;">{{ session('success') }}</div>
-    @endif
+<div class="sidebar">
+<h2>ADMIN</h2>
 
-    <h2>Manage Services</h2>
-    <form action="/admin/services" method="POST">
-        @csrf
-        <input type="text" name="code" placeholder="Code (e.g. T)" required>
-        <input type="text" name="name" placeholder="Name (e.g. Teller)" required>
-        <button type="submit">Add Service</button>
-    </form>
+<a href="/admin">Dashboard</a>
+<a href="/admin/setting">Kelola Tampilan</a>
+<a href="/admin/user">Manajemen User</a>
+<a href="/logout">Logout</a>
+</div>
 
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Code</th>
-            <th>Name</th>
-            <th>Actions</th>
-        </tr>
-        @foreach($services as $service)
-        <tr>
-            <td>{{ $service->id }}</td>
-            <td>{{ $service->code }}</td>
-            <td>{{ $service->name }}</td>
-            <td>
-                <button onclick="editService({{ $service->id }}, '{{ $service->code }}', '{{ $service->name }}')">Edit</button>
-                <form action="/admin/services/{{ $service->id }}" method="POST" style="display:inline;">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" onclick="return confirm('Delete?')">Delete</button>
-                </form>
-            </td>
-        </tr>
-        @endforeach
-    </table>
+<div class="content">
 
-    <div id="edit-form" style="display:none;">
-        <h3>Edit Service</h3>
-        <form action="" method="POST" id="update-form">
-            @csrf
-            @method('PUT')
-            <input type="text" name="code" id="edit-code" required>
-            <input type="text" name="name" id="edit-name" required>
-            <button type="submit">Update</button>
-            <button type="button" onclick="cancelEdit()">Cancel</button>
-        </form>
-    </div>
+<h1>Dashboard Admin</h1>
 
-    <h2>Antrian</h2>
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Nomor</th>
-            <th>Service</th>
-            <th>Status</th>
-            <th>Loket</th>
-            <th>Started At</th>
-            <th>Finished At</th>
-            <th>Created At</th>
-        </tr>
-        @foreach($queues as $queue)
-        <tr>
-            <td>{{ $queue->id }}</td>
-            <td>{{ $queue->number }}</td>
-            <td>{{ $queue->service->name ?? 'N/A' }}</td>
-            <td class="status-{{ $queue->status }}">{{ ucfirst($queue->status) }}</td>
-            <td>{{ $queue->loket ?? '—' }}</td>
-            <td>{{ $queue->started_at ? $queue->started_at->format('d/m/Y H:i') : '—' }}</td>
-            <td>{{ $queue->finished_at ? $queue->finished_at->format('d/m/Y H:i') : '—' }}</td>
-            <td>{{ $queue->created_at->format('d/m/Y H:i') }}</td>
-        </tr>
-        @endforeach
-    </table>
+<div class="card">
+<h3>Jumlah Antrian Hari Ini</h3>
 
-    <script>
-        function editService(id, code, name) {
-            document.getElementById('edit-code').value = code;
-            document.getElementById('edit-name').value = name;
-            document.getElementById('update-form').action = '/admin/services/' + id;
-            document.getElementById('edit-form').style.display = 'block';
-        }
+<p>Loket 1: 0</p>
+<p>Loket 2: 0</p>
+<p>Loket 3: 0</p>
+<p>Loket 4: 0</p>
+</div>
 
-        function cancelEdit() {
-            document.getElementById('edit-form').style.display = 'none';
-        }
-    </script>
+<!-- TAMBAH USER -->
+<div class="card">
+<h3>Tambah User</h3>
+
+<form action="/admin/user" method="POST">
+@csrf
+
+<input type="text" name="name" placeholder="Nama">
+<input type="email" name="email" placeholder="Email">
+<input type="password" name="password" placeholder="Password">
+
+<select name="role">
+<option value="admin">Admin</option>
+<option value="officer">Officer</option>
+</select>
+
+<button type="submit">Tambah</button>
+</form>
+</div>
+
+<!-- SETTING -->
+<div class="card">
+<h3>Pengaturan Tampilan</h3>
+
+<form action="/admin/settings" method="POST" enctype="multipart/form-data">
+@csrf
+
+<input type="text" name="youtube" placeholder="Link YouTube" value="{{ $setting->youtube ?? '' }}">
+
+<input type="file" name="logo">
+
+<input type="file" name="background">
+
+<button type="submit">Simpan Tampilan</button>
+
+</form>
+</div>
+
+<!-- LIST USER -->
+<div class="card">
+<h3>Daftar User</h3>
+
+<table border="1" width="100%" cellpadding="10">
+<tr>
+<th>Nama</th>
+<th>Email</th>
+<th>Role</th>
+<th>Aksi</th>
+</tr>
+
+@foreach($users as $user)
+<tr>
+<td>{{$user->name}}</td>
+<td>{{$user->email}}</td>
+<td>{{$user->role}}</td>
+<td>
+<a href="/admin/delete/{{$user->id}}">
+<button>Hapus</button>
+</a>
+</td>
+</tr>
+@endforeach
+
+</table>
+
+</div>
+
+</div>
+
 </body>
 </html>

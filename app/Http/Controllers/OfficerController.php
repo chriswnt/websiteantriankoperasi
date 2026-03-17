@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use App\Models\Queue;
 
 class OfficerController extends Controller
@@ -9,26 +10,58 @@ class OfficerController extends Controller
 
 public function index()
 {
+    $queues = Queue::orderBy('id','asc')->get();
 
-$queues = Queue::where('status','waiting')
-        ->orderBy('id')
-        ->get();
+    $total = Queue::count();
 
-return view('officer',compact('queues'));
+    $current = Queue::where('status','called')->latest()->first();
 
+    $next = Queue::where('status','waiting')->orderBy('id')->first();
+
+    $remaining = Queue::where('status','waiting')->count();
+
+    $loket1 = Queue::where('loket_id',1)->where('status','called')->latest()->first();
+    $loket2 = Queue::where('loket_id',2)->where('status','called')->latest()->first();
+    $loket3 = Queue::where('loket_id',3)->where('status','called')->latest()->first();
+    $loket4 = Queue::where('loket_id',4)->where('status','called')->latest()->first();
+
+    return view('officer', compact(
+        'queues',
+        'total',
+        'current',
+        'next',
+        'remaining',
+        'loket1',
+        'loket2',
+        'loket3',
+        'loket4'
+    ));
 }
 
+// PANGGIL
 public function call($id)
 {
+    $queue = Queue::find($id);
 
-$queue = Queue::find($id);
+    if($queue){
+        $queue->status = 'called';
+        $queue->save();
+    }
 
-$queue->update([
-'status'=>'called'
-]);
+    return redirect('/officer');
+}
 
-return redirect()->back();
+// SELESAI
+public function done($id)
+{
+    $queue = Queue::find($id);
 
+    if($queue){
+        $queue->status = 'done';
+        $queue->save();
+    }
+
+    return redirect('/officer');
 }
 
 }

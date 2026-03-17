@@ -139,11 +139,11 @@ Ambil nomor antrean atau pantau dashboard secara realtime.
 Ambil<br>Antrian
 </a>
 
-<a href="/" class="card btn-outline">
+<a href="/dashboard" class="card btn-outline">
 Dashboard
 </a>
 
-<a href="/officer" class="card btn-outline">
+<a href="/login" class="card btn-outline">
 Petugas
 </a>
 
