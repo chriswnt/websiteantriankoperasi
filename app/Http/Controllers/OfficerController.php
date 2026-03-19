@@ -2,66 +2,76 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Queue;
+use App\Events\AntreanUpdate; // 🔥 Wajib di-import
+use Illuminate\Http\Request;
 
 class OfficerController extends Controller
 {
-
-public function index()
-{
-    $queues = Queue::orderBy('id','asc')->get();
-
-    $total = Queue::count();
-
-    $current = Queue::where('status','called')->latest()->first();
-
-    $next = Queue::where('status','waiting')->orderBy('id')->first();
-
-    $remaining = Queue::where('status','waiting')->count();
-
-    $loket1 = Queue::where('loket_id',1)->where('status','called')->latest()->first();
-    $loket2 = Queue::where('loket_id',2)->where('status','called')->latest()->first();
-    $loket3 = Queue::where('loket_id',3)->where('status','called')->latest()->first();
-    $loket4 = Queue::where('loket_id',4)->where('status','called')->latest()->first();
-
-    return view('officer', compact(
-        'queues',
-        'total',
-        'current',
-        'next',
-        'remaining',
-        'loket1',
-        'loket2',
-        'loket3',
-        'loket4'
-    ));
-}
-
-// PANGGIL
-public function call($id)
-{
-    $queue = Queue::find($id);
-
-    if($queue){
-        $queue->status = 'called';
-        $queue->save();
+    public function index()
+    {
+        return view('officer');
     }
 
-    return redirect('/officer');
-}
+    // 🔥 DATA JSON UNTUK AJAX
+    public function data()
+    {
+        $query = Queue::with('service')->whereDate('created_at', today());
 
-// SELESAI
-public function done($id)
-{
-    $queue = Queue::find($id);
-
-    if($queue){
-        $queue->status = 'done';
-        $queue->save();
+        return response()->json([
+            'queues' => (clone $query)->orderBy('id', 'desc')->get(), 
+            'total' => (clone $query)->count(),
+            'current' => (clone $query)
+                ->where('status','called')
+                ->latest('called_at')
+                ->first(),
+            'next' => (clone $query)
+                ->where('status','waiting')
+                ->orderBy('id', 'asc')
+                ->first(),
+            'remaining' => (clone $query)
+                ->where('status','waiting')
+                ->count(),
+        ]);
     }
 
-    return redirect('/officer');
-}
+    // 🔥 PANGGIL ANTREAN
+    public function call($id)
+    {
+        // 1. Selesaikan antrean yang berstatus 'called' sebelumnya
+        Queue::where('status','called')->update([
+            'status' => 'done',
+            'done_at' => now()
+        ]);
 
+        // 2. Update antrean terpilih menjadi 'called'
+        $queue = Queue::find($id);
+        if ($queue && $queue->status == 'waiting') {
+            $queue->status = 'called';
+            $queue->called_at = now();
+            $queue->save();
+        }
+
+        // 🚀 KIRIM SINYAL REALTIME KE SEMUA LAYAR
+        event(new AntreanUpdate());
+
+        return response()->json(['success' => true]);
+    }
+
+    // 🔥 SELESAIKAN ANTREAN
+    public function done($id)
+    {
+        $queue = Queue::find($id);
+
+        if ($queue && $queue->status != 'done') {
+            $queue->status = 'done';
+            $queue->done_at = now();
+            $queue->save();
+        }
+
+        // 🚀 KIRIM SINYAL REALTIME KE SEMUA LAYAR
+        event(new AntreanUpdate());
+
+        return response()->json(['success' => true]);
+    }
 }

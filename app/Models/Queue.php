@@ -6,24 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class Queue extends Model
 {
-
-   protected $fillable = [
-        'service_id',
+    protected $fillable = [
         'queue_number',
+        'service_id', 
         'status',
-        'loket',
-        'started_at',
-        'finished_at'
+        'called_at', // 🔥 Tambahkan ini agar diizinkan Laravel
+        'done_at'    // 🔥 Tambahkan ini juga
     ];
 
-    protected $casts = [
-        'started_at' => 'datetime',
-        'finished_at' => 'datetime',
-    ];
-
+    // 🔥 RELASI KE SERVICES
     public function service()
     {
-        return $this->belongsTo(Service::class);
+        return $this->belongsTo(\App\Models\Service::class);
     }
-
 }

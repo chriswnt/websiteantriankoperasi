@@ -2,151 +2,87 @@
 <html>
 <head>
 
-<title>Ambil Nomor Antrean</title>
+<title>Ambil Antrian</title>
+
+<meta name="csrf-token" content="{{ csrf_token() }}">
 
 <style>
-
-:root{
---emerald:#114338;
---gold:#FBB03C;
---ivory:#E9E2D9;
---grey:#808E91;
-}
-
-/* BODY */
-
 body{
 margin:0;
-font-family:'Segoe UI',sans-serif;
-background:#f5f5f5;
+font-family:Arial;
+background:#114338;
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
 }
-
-/* HEADER */
-
-.header{
-background:white;
-padding:15px;
-text-align:center;
-font-weight:bold;
-font-size:22px;
-border-bottom:2px solid #ddd;
-}
-
-.header span{
-color:var(--gold);
-}
-
-/* CONTAINER */
 
 .container{
-width:90%;
-margin:30px auto;
-}
-
-/* SERVICES GRID */
-
-.services{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:15px;
-margin-bottom:30px;
-}
-
-/* BUTTON */
-
-.service-btn{
-width:100%;
-padding:30px;
-font-size:18px;
-background:white;
-border:1px solid #ddd;
-border-radius:5px;
-cursor:pointer;
-transition:0.2s;
-}
-
-.service-btn:hover{
-background:var(--gold);
-color:white;
-}
-
-/* ANTRIAN */
-
-.queue-section{
 text-align:center;
-margin-top:20px;
 }
 
-.queue-title{
-margin:20px 0;
-color:#666;
+h2{
+color:#FBB03C;
+margin-bottom:40px;
 }
 
-.queue-box{
-background:white;
-padding:30px;
-border-radius:8px;
-display:inline-block;
-}
-
-.queue-number{
-font-size:60px;
+.btn{
+display:block;
+width:300px;
+margin:15px auto;
+padding:20px;
+font-size:20px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+background:#FBB03C;
+color:#114338;
 font-weight:bold;
-color:var(--emerald);
+transition:0.3s;
 }
 
+.btn:hover{
+background:white;
+transform:scale(1.05);
+}
 </style>
 
 </head>
 
 <body>
 
-<div class="header">
-#MILIK<span>BERSAMA</span>
-</div>
-
 <div class="container">
 
-<div class="services">
+<h2>Pilih Layanan</h2>
 
-@foreach($services as $service)
-
-<form action="/ambil" method="POST">
-@csrf
-
-<input type="hidden" name="service_id" value="{{$service->id}}">
-
-<button class="service-btn">
-{{$service->name}}
-</button>
-
-</form>
-
-@endforeach
+<button class="btn" onclick="ambil(1)">TARIK / SETOR</button>
+<button class="btn" onclick="ambil(3)">ADMINISTRASI</button>
+<button class="btn" onclick="ambil(2)">PINJAMAN</button>
 
 </div>
 
-<div class="queue-section">
+<script>
+function ambil(serviceId){
 
-<div class="queue-title">
-ANTRIAN SAAT INI
-</div>
+fetch('/ambil', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    },
+    body: JSON.stringify({
+        service_id: serviceId
+    })
+})
+.then(res => res.text())
+.then(() => {
+    alert('✅ Nomor antrian berhasil diambil');
+})
+.catch(err => console.error(err));
 
-@if(session('number'))
-
-<div class="queue-box">
-
-<div class="queue-number">
-{{ session('number') }}
-</div>
-
-</div>
-
-@endif
-
-</div>
-
-</div>
+}
+</script>
 
 </body>
 </html>

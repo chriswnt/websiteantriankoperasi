@@ -11,11 +11,21 @@ class AdminController extends Controller
 
 public function index()
 {
-    $users = User::all();
+    $totalUsers = \App\Models\User::count();
 
-    return view('admin', compact('users'));
+    $loket1 = \App\Models\Queue::where('loket_id',1)->count();
+    $loket2 = \App\Models\Queue::where('loket_id',2)->count();
+    $loket3 = \App\Models\Queue::where('loket_id',3)->count();
+    $loket4 = \App\Models\Queue::where('loket_id',4)->count();
+
+    return view('admin', compact(
+        'totalUsers',
+        'loket1',
+        'loket2',
+        'loket3',
+        'loket4'
+    ));
 }
-
 // DASHBOARD TV
 public function dashboard()
 {
@@ -55,7 +65,10 @@ public function deleteUser($id)
 public function setting()
 {
     $setting = Setting::firstOrCreate([]);
-    return view('admin_setting', compact('setting'));
+
+    $queue = \App\Models\Queue::where('status','called')->latest()->first();
+
+    return view('admin_setting', compact('setting','queue'));
 }
 
 public function updateSetting(Request $request)

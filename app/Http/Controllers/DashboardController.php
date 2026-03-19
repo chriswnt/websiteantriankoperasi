@@ -7,48 +7,49 @@ use App\Models\Setting;
 
 class DashboardController extends Controller
 {
+    public function index()
+    {
+        $setting = Setting::first();
 
-// LOAD AWAL
-public function index()
-{
-    $setting = Setting::first();
+        // Cari yang sedang dipanggil saat ini
+        $queue = Queue::where('status', 'called')->latest('called_at')->first();
 
-    $queue = Queue::where('status','called')->latest()->first();
+        // Cari yang paling terakhir dipanggil per layanan (termasuk yang sudah 'done' agar layar tidak kosong)
+        $teller = Queue::where('service_id', 1)->whereNotNull('called_at')->latest('called_at')->first();
+        $pinjaman = Queue::where('service_id', 2)->whereNotNull('called_at')->latest('called_at')->first();
+        $administrasi = Queue::where('service_id', 3)->whereNotNull('called_at')->latest('called_at')->first();
 
-    $loket1 = Queue::where('loket_id',1)->where('status','called')->latest()->first();
-    $loket2 = Queue::where('loket_id',2)->where('status','called')->latest()->first();
-    $loket3 = Queue::where('loket_id',3)->where('status','called')->latest()->first();
-    $loket4 = Queue::where('loket_id',4)->where('status','called')->latest()->first();
+        return view('dashboard', compact(
+            'setting',
+            'queue',
+            'teller',
+            'administrasi',
+            'pinjaman'
+        ));
+    }
 
-    return view('dashboard', compact(
-        'setting',
-        'queue',
-        'loket1',
-        'loket2',
-        'loket3',
-        'loket4'
-    ));
-}
+    // 🔥 REALTIME (Ganti fungsi data yang ini ya)
+    public function data()
+    {
+        // Tambahkan with('service') agar nama layanan ikut terbawa
+        $main = Queue::with('service')->where('status', 'called')->latest('called_at')->first();
 
+        return response()->json([
+            // Kirim nomor dan nama layanan
+            'main_number'  => $main ? ($main->queue_number ?? $main->id) : '000',
+            'main_service' => $main ? ($main->service->name ?? '-') : '-',
 
-// REALTIME DATA
-public function data()
-{
-    $queue = Queue::where('status','called')->latest()->first();
+            'teller' => optional(
+                Queue::where('service_id', 1)->whereNotNull('called_at')->latest('called_at')->first()
+            )->queue_number ?? '-',
 
-    $loket1 = Queue::where('loket_id',1)->where('status','called')->latest()->first();
-    $loket2 = Queue::where('loket_id',2)->where('status','called')->latest()->first();
-    $loket3 = Queue::where('loket_id',3)->where('status','called')->latest()->first();
-    $loket4 = Queue::where('loket_id',4)->where('status','called')->latest()->first();
+            'administrasi' => optional(
+                Queue::where('service_id', 3)->whereNotNull('called_at')->latest('called_at')->first()
+            )->queue_number ?? '-',
 
-    return response()->json([
-        'queue_number' => $queue->queue_number ?? null,
-        'loket' => $queue->loket_id ?? null,
-        'loket1' => $loket1->queue_number ?? null,
-        'loket2' => $loket2->queue_number ?? null,
-        'loket3' => $loket3->queue_number ?? null,
-        'loket4' => $loket4->queue_number ?? null,
-    ]);
-}
-
+            'pinjaman' => optional(
+                Queue::where('service_id', 2)->whereNotNull('called_at')->latest('called_at')->first()
+            )->queue_number ?? '-',
+        ]);
+    }       
 }

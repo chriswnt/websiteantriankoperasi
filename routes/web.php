@@ -5,43 +5,58 @@ use App\Http\Controllers\QueueController;
 use App\Http\Controllers\OfficerController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\DashboardController;
 
 /* HOME */
 Route::get('/', function () {
     return view('welcome');
 });
 
-/* DASHBOARD TV */
+/* ================== DASHBOARD ================== */
+
 Route::get('/dashboard', [AdminController::class, 'dashboard']);
+Route::get('/dashboard/data', [DashboardController::class, 'data']);
 
-/* AMBIL ANTRIAN */
+/* ================== AMBIL ANTRIAN ================== */
+
 Route::get('/ambil', [QueueController::class, 'index']);
-Route::post('/ambil', [QueueController::class, 'store']);
 
-/* LOGIN */
-Route::get('/login', [AuthController::class, 'loginForm']);
+// 🔥 bypass CSRF (biar ga 419)
+Route::post('/ambil', [QueueController::class, 'store'])
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
+/* ================== AUTH ================== */
+
+Route::get('/login', [AuthController::class, 'loginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/logout', [AuthController::class, 'logout']);
 
-/* OFFICER */
-Route::get('/officer', [OfficerController::class, 'index'])->middleware('auth');
+/* ================== OFFICER ================== */
 
-/* ADMIN */
-Route::get('/admin', [AdminController::class, 'index'])->middleware('auth');
+Route::middleware('auth')->group(function(){
 
-/* USER */
-Route::get('/admin/user', [AdminController::class, 'user'])->middleware('auth');
-Route::post('/admin/user', [AdminController::class, 'storeUser'])->middleware('auth');
-Route::get('/admin/delete/{id}', [AdminController::class, 'deleteUser'])->middleware('auth');
+    Route::get('/officer', [OfficerController::class, 'index']);
 
-/* SETTING */
-Route::get('/admin/setting', [AdminController::class, 'setting'])->middleware('auth');
-Route::post('/admin/setting/update', [AdminController::class, 'updateSetting'])->middleware('auth');
-Route::get('/call/{id}', [OfficerController::class, 'call'])
-    ->name('call')
-    ->middleware('auth');
+    // realtime
+    Route::get('/officer/data', [OfficerController::class, 'data']);
 
-Route::get('/done/{id}', [OfficerController::class, 'done'])
-    ->name('done')
-    ->middleware('auth');
-    Route::get('/dashboard-data', [DashboardController::class, 'data']);
+    // 🔥 FIX: Ubah menjadi POST agar aman dan sesuai dengan Javascript fetch() di Blade
+    Route::post('/officer/call/{id}', [OfficerController::class, 'call']);
+    Route::post('/officer/done/{id}', [OfficerController::class, 'done']);
+
+});
+
+/* ================== ADMIN ================== */
+
+Route::middleware('auth')->group(function(){
+
+    Route::get('/admin', [AdminController::class, 'index']);
+
+    Route::get('/admin/user', [AdminController::class, 'user']);
+    Route::post('/admin/user', [AdminController::class, 'storeUser']);
+    Route::get('/admin/delete/{id}', [AdminController::class, 'deleteUser']);
+
+    Route::get('/admin/setting', [AdminController::class, 'setting']);
+    Route::post('/admin/setting/update', [AdminController::class, 'updateSetting']);
+
+});
