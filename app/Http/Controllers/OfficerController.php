@@ -1,10 +1,11 @@
-<?php
+<?php 
 
 namespace App\Http\Controllers;
 
 use App\Models\Queue;
-use App\Events\AntreanUpdate; // 🔥 Wajib di-import
+use App\Events\AntreanUpdate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class OfficerController extends Controller
 {
@@ -13,65 +14,133 @@ class OfficerController extends Controller
         return view('officer');
     }
 
-    // 🔥 DATA JSON UNTUK AJAX
+    /**
+     * Ambil service_id langsung dari user yang login
+     */
+    private function getServiceId()
+    {
+        return Auth::user()->service_id;
+    }
+
     public function data()
     {
-        $query = Queue::with('service')->whereDate('created_at', today());
+        $serviceId = $this->getServiceId();
+
+        if (!$serviceId) {
+            return response()->json([
+                'queues' => [],
+                'total' => 0,
+                'current' => null,
+                'next' => null,
+                'remaining' => 0,
+                'message' => 'Service user belum diatur.'
+            ], 403);
+        }
+
+        $query = Queue::with('service')
+            ->where('service_id', $serviceId)
+            ->whereDate('created_at', today());
 
         return response()->json([
-            'queues' => (clone $query)->orderBy('id', 'desc')->get(), 
+            'queues' => (clone $query)->orderBy('id', 'desc')->get(),
             'total' => (clone $query)->count(),
             'current' => (clone $query)
-                ->where('status','called')
+                ->where('status', 'called')
                 ->latest('called_at')
                 ->first(),
             'next' => (clone $query)
-                ->where('status','waiting')
+                ->where('status', 'waiting')
                 ->orderBy('id', 'asc')
                 ->first(),
             'remaining' => (clone $query)
-                ->where('status','waiting')
+                ->where('status', 'waiting')
                 ->count(),
         ]);
     }
 
-    // 🔥 PANGGIL ANTREAN
     public function call($id)
     {
-        // 1. Selesaikan antrean yang berstatus 'called' sebelumnya
-        Queue::where('status','called')->update([
-            'status' => 'done',
-            'done_at' => now()
-        ]);
+        $serviceId = $this->getServiceId();
 
-        // 2. Update antrean terpilih menjadi 'called'
-        $queue = Queue::find($id);
-        if ($queue && $queue->status == 'waiting') {
+        if (!$serviceId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Service user belum diatur.'
+            ], 403);
+        }
+
+        Queue::whereDate('created_at', today())
+            ->where('service_id', $serviceId)
+            ->where('status', 'called')
+            ->update([
+                'status' => 'done',
+                'done_at' => now()
+            ]);
+
+        $queue = Queue::whereDate('created_at', today())
+            ->where('service_id', $serviceId)
+            ->where('id', $id)
+            ->first();
+
+        if ($queue && $queue->status === 'waiting') {
             $queue->status = 'called';
             $queue->called_at = now();
+            $queue->done_at = null;
             $queue->save();
         }
 
-        // 🚀 KIRIM SINYAL REALTIME KE SEMUA LAYAR
         event(new AntreanUpdate());
 
         return response()->json(['success' => true]);
     }
 
-    // 🔥 SELESAIKAN ANTREAN
     public function done($id)
     {
-        $queue = Queue::find($id);
+        $serviceId = $this->getServiceId();
 
-        if ($queue && $queue->status != 'done') {
+        if (!$serviceId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Service user belum diatur.'
+            ], 403);
+        }
+
+        $queue = Queue::whereDate('created_at', today())
+            ->where('service_id', $serviceId)
+            ->where('id', $id)
+            ->first();
+
+        if ($queue && $queue->status !== 'done') {
             $queue->status = 'done';
             $queue->done_at = now();
             $queue->save();
         }
 
-        // 🚀 KIRIM SINYAL REALTIME KE SEMUA LAYAR
         event(new AntreanUpdate());
 
         return response()->json(['success' => true]);
+    }
+
+    public function reset()
+    {
+        $serviceId = $this->getServiceId();
+
+        if (!$serviceId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Service user belum diatur.'
+            ], 403);
+        }
+
+        Queue::whereDate('created_at', today())
+            ->where('service_id', $serviceId)
+            ->delete();
+
+        event(new AntreanUpdate());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Antrean layanan ini berhasil direset.'
+        ]);
     }
 }

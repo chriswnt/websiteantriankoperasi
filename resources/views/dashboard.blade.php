@@ -124,6 +124,7 @@ updateClock();
 // 3. LOGIKA SUARA & ANTREAN
 let speechQueue = [];
 let isSpeaking = false;
+let previousMainNumber = null; // 🔥 TAMBAHAN: Menyimpan nomor agar tidak dipanggil dobel
 
 function panggilSuara(nomor, layanan) {
     if (isSpeaking) {
@@ -171,14 +172,25 @@ function loadQueue(withSound = false){
     fetch('/dashboard/data') 
     .then(res => res.json())
     .then(data => {
-        document.getElementById('main-number').innerText = data.main_number;
-        document.getElementById('layanan-txt').innerText = data.main_service.toUpperCase();
-        document.getElementById('teller').innerText = data.teller;
-        document.getElementById('administrasi').innerText = data.administrasi;
-        document.getElementById('pinjaman').innerText = data.pinjaman;
+        // 🔥 TAMBAHAN: Logika jika antrean kosong/habis direset, ubah jadi "000" dan "-"
+        let mainNum = (data.main_number && data.main_number !== '-') ? data.main_number : '000';
+        let mainSvc = (data.main_service && data.main_service !== '-') ? data.main_service.toUpperCase() : '-';
 
-        if(withSound && data.main_number !== '000' && data.main_number !== '-') {
-            panggilSuara(data.main_number, data.main_service);
+        document.getElementById('main-number').innerText = mainNum;
+        document.getElementById('layanan-txt').innerText = mainSvc;
+        
+        document.getElementById('teller').innerText = (data.teller && data.teller !== '-') ? data.teller : '000';
+        document.getElementById('administrasi').innerText = (data.administrasi && data.administrasi !== '-') ? data.administrasi : '000';
+        document.getElementById('pinjaman').innerText = (data.pinjaman && data.pinjaman !== '-') ? data.pinjaman : '000';
+
+        // 🔥 TAMBAHAN: Pastikan suara tidak manggil "000" dan tidak dobel manggil nomor yg sama
+        if(withSound && mainNum !== '000' && mainNum !== '-') {
+            if (mainNum !== previousMainNumber) {
+                panggilSuara(mainNum, mainSvc);
+                previousMainNumber = mainNum; // Update ingatan ke nomor terbaru
+            }
+        } else if (mainNum === '000') {
+            previousMainNumber = null; // Lupakan memori nomor jika sudah direset ke 000
         }
     })
     .catch(err => console.error('Gagal ambil data:', err));
@@ -192,7 +204,22 @@ function aktifkanAudio() {
     console.log("✅ Izin suara didapat!");
 }
 
-// 6. PUSHER
+// 🔥 TAMBAHAN 6. FUNGSI AUTO-REFRESH SAAT PERGANTIAN HARI (JAM 00:00:01)
+function autoRefreshAtMidnight() {
+    let now = new Date();
+    let night = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1, 
+        0, 0, 1 
+    );
+    let msToMidnight = night.getTime() - now.getTime();
+    setTimeout(function() {
+        window.location.reload(true); 
+    }, msToMidnight);
+}
+
+// 7. PUSHER
 var pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
     cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
     forceTLS: true
@@ -206,6 +233,7 @@ channel.bind('AntreanUpdate', () => {
 
 // Jalankan load pertama
 loadQueue(false);
+autoRefreshAtMidnight(); // 🔥 TAMBAHAN: Jalankan timer refresh
 </script>
 
 </body>

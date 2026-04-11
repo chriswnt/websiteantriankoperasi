@@ -7,48 +7,59 @@ use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
-
-/* HALAMAN LOGIN */
-public function loginForm()
-{
-    return view('login');
-}
-
-/* PROSES LOGIN */
-public function login(Request $request)
-{
-
-    if(Auth::attempt([
-        'email'=>$request->email,
-        'password'=>$request->password
-    ]))
+    public function loginForm()
     {
+        if (auth()->check()) {
+            $user = auth()->user();
+
+            if ($user->role === 'admin') {
+                return redirect('/admin');
+            }
+
+            if ($user->role === 'officer') {
+                return redirect('/officer');
+            }
+        }
+
+        return view('login');
+    }
+
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
+        ]);
+
+        if (!Auth::attempt($credentials)) {
+            return back()
+                ->with('error', 'Email atau password salah.')
+                ->withInput($request->only('email'));
+        }
+
+        $request->session()->regenerate();
 
         $user = Auth::user();
 
-        /* CEK ROLE */
-
-        if($user->role == 'admin'){
+        if ($user->role === 'admin') {
             return redirect('/admin');
         }
 
-        if($user->role == 'officer'){
+        if ($user->role === 'officer') {
             return redirect('/officer');
         }
 
-        /* kalau role kosong */
-        return redirect('/');
+        Auth::logout();
+        return redirect('/login')->with('error', 'Role tidak dikenali');
     }
 
-    return back()->with('error','Login gagal');
+    public function logout(Request $request)
+    {
+        Auth::logout();
 
-}
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
-/* LOGOUT */
-public function logout()
-{
-    Auth::logout();
-    return redirect('/login');
-}
-
+        return redirect('/login');
+    }
 }

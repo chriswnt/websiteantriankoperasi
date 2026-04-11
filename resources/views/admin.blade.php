@@ -47,6 +47,16 @@ box-shadow:0 4px 10px rgba(0,0,0,0.1);
 text-align:center;
 }
 
+.logout-btn{
+margin-top:20px;
+padding:10px;
+background:#e74c3c;
+color:white;
+border:none;
+cursor:pointer;
+border-radius:5px;
+width:100%;
+}
 </style>
 
 </head>
@@ -55,10 +65,16 @@ text-align:center;
 
 <div class="sidebar">
 <h2>ADMIN</h2>
+
 <a href="/admin">Dashboard</a>
-<a href="/admin/setting">Kelola Tampilan</a>
 <a href="/admin/user">Manajemen User</a>
-<a href="/logout">Logout</a>
+<a href="/admin/setting">Kelola Tampilan</a>
+
+<form action="{{ route('logout') }}" method="POST">
+@csrf
+<button class="logout-btn">Logout</button>
+</form>
+
 </div>
 
 <div class="content">

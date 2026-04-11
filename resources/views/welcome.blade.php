@@ -1,6 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Aplikasi Antrian</title>
 
@@ -18,7 +21,6 @@ color:white;
 }
 
 /* HERO BACKGROUND */
-
 .hero{
 height:100vh;
 display:flex;
@@ -40,20 +42,17 @@ background-position:center;
 }
 
 /* CONTENT */
-
 .content{
 max-width:550px;
 }
 
 /* LOGO */
-
 .logo{
 height:110px;
 margin-bottom:25px;
 }
 
 /* TITLE */
-
 h1{
 font-size:60px;
 margin:0 0 20px 0;
@@ -61,22 +60,19 @@ line-height:1.1;
 }
 
 /* PARAGRAPH */
-
 p{
 font-size:18px;
 opacity:0.9;
 margin-bottom:50px;
 }
 
-/* MENU GRID */
-
+/* MENU */
 .menu{
 display:flex;
 gap:30px;
 }
 
 /* CARD */
-
 .card{
 flex:1;
 text-align:center;
@@ -89,7 +85,6 @@ transition:0.25s;
 }
 
 /* COLORS */
-
 .btn-gold{
 background:var(--gold);
 color:var(--emerald);
@@ -101,7 +96,6 @@ color:var(--gold);
 }
 
 /* HOVER */
-
 .card:hover{
 transform:translateY(-6px);
 }
@@ -109,6 +103,19 @@ transform:translateY(-6px);
 .btn-outline:hover{
 background:var(--gold);
 color:var(--emerald);
+}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+.hero{
+padding:40px;
+text-align:center;
+justify-content:center;
+}
+
+.menu{
+flex-direction:column;
+}
 }
 
 </style>
@@ -135,15 +142,15 @@ Ambil nomor antrean atau pantau dashboard secara realtime.
 
 <div class="menu">
 
-<a href="/ambil" class="card btn-gold">
+<a href="{{ url('/ambil') }}" class="card btn-gold">
 Ambil<br>Antrian
 </a>
 
-<a href="/dashboard" class="card btn-outline">
+<a href="{{ url('/dashboard') }}" class="card btn-outline">
 Dashboard
 </a>
 
-<a href="/login" class="card btn-outline">
+<a href="{{ url('/login') }}" class="card btn-outline">
 Petugas
 </a>
 

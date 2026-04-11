@@ -15,7 +15,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'service_id', // 🔥 GANTI INI (BUKAN service LAGI)
+        'service_id',
     ];
 
     protected $hidden = [
@@ -31,9 +31,8 @@ class User extends Authenticatable
         ];
     }
 
-    // 🔥 RELASI KE TABEL SERVICES
-    public function service()
+    public function serviceRelation()
     {
-        return $this->belongsTo(Service::class);
+        return $this->belongsTo(Service::class, 'service_id');
     }
 }

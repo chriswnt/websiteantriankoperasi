@@ -5,50 +5,67 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Queue;
 use App\Models\Service;
-use App\Events\AntreanUpdate; // 🔥 Wajib di-import agar bisa mengirim sinyal ke Pusher
+use App\Events\AntreanUpdate;
 
 class QueueController extends Controller
 {
+    // Menampilkan halaman ambil antrean
     public function index()
     {
-        return view('ambil_antrian');
+        // Ambil semua layanan
+        $services = Service::orderBy('id', 'asc')->get();
+        return view('ambil_antrian', compact('services'));
     }
 
+    // Menyimpan antrean yang dipilih
     public function store(Request $request)
     {
-        $serviceId = $request->service_id;
+        // Validasi service_id yang diterima
+        $request->validate([
+            'service_id' => ['required', 'exists:services,id'], // Memastikan service_id valid
+        ]);
 
-        // Ambil service
+        // Ambil service berdasarkan service_id
+        $serviceId = $request->service_id;
         $service = Service::find($serviceId);
 
-        if(!$service){
-            return back();
+        // Jika service tidak ditemukan, kembalikan error
+        if (!$service) {
+            return back()->with('error', 'Layanan tidak ditemukan.');
         }
 
-        // Hitung nomor terakhir berdasarkan service_id
-        $last = Queue::where('service_id', $serviceId)->latest()->first();
+        // Cari antrean terakhir berdasarkan service_id untuk hari ini
+        $last = Queue::where('service_id', $serviceId)
+            ->whereDate('created_at', today()) // Pastikan hanya yang hari ini
+            ->orderBy('id', 'desc')
+            ->first();
 
         $number = 1;
-        if($last){
-            // Mengambil angka setelah prefix (misal T001 jadi 001) lalu ditambah 1
-            $number = (int) substr($last->queue_number, 1) + 1;
+
+        // Tentukan nomor antrean baru, increment berdasarkan antrean terakhir
+        if ($last && !empty($last->queue_number)) {
+            $lastNumber = (int) preg_replace('/[^0-9]/', '', $last->queue_number);
+            $number = $lastNumber + 1;
         }
 
-        // Prefix dari code (A, T, P, dll)
-        $prefix = $service->code;
-        $queueNumber = $prefix . str_pad($number, 3, '0', STR_PAD_LEFT);
+        // Ambil prefix dari layanan (misalnya 'T' untuk Teller)
+        $prefix = strtoupper($service->code); // Pastikan di service ada kolom 'code' seperti 'T', 'P', dll
+        $queueNumber = $prefix . str_pad($number, 3, '0', STR_PAD_LEFT); // Format antrean: T001, P002, dll
 
-        // Simpan antrean baru
+        // Simpan antrean baru ke database
         Queue::create([
             'queue_number' => $queueNumber,
             'service_id'   => $serviceId,
-            'status'       => 'waiting'
+            'status'       => 'waiting', // Status awal adalah 'waiting'
         ]);
 
-        // 🔥 SINYAL REAL-TIME
-        // Mengirim sinyal ke Pusher bahwa ada antrean baru yang masuk
+        // Kirim sinyal ke semua tampilan untuk memperbarui antrean
         event(new AntreanUpdate());
 
-        return back();
+        // Kembali dengan pesan sukses
+        return response()->json([
+            'success' => true,
+            'message' => 'Antrean berhasil diambil.',
+        ]);
     }
 }
