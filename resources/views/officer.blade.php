@@ -201,6 +201,94 @@
             font-style: italic;
         }
 
+        .btn-profile {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-profile:hover {
+            background: #2980b9;
+        }
+
+        /* dropdown user */
+        .user-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .user-dropdown-toggle {
+            background: white;
+            border: 1px solid #dfe6e9;
+            color: #2c3e50;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 220px;
+            justify-content: space-between;
+            font-weight: 600;
+        }
+
+        .user-dropdown-toggle:hover {
+            background: #f8f9fa;
+        }
+
+        .user-icon {
+            color: #3498db;
+            font-size: 14px;
+        }
+
+        .user-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            width: 220px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+            overflow: hidden;
+            display: none;
+            z-index: 9999;
+        }
+
+        .user-dropdown-menu.show {
+            display: block;
+        }
+
+        .user-dropdown-item {
+            width: 100%;
+            background: white;
+            border: none;
+            text-decoration: none;
+            color: #2c3e50;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            text-align: left;
+            box-sizing: border-box;
+        }
+
+        .user-dropdown-item:hover {
+            background: #eef6ff;
+        }
+
+        .logout-item:hover {
+            background: #f8f9fa;
+        }
+
+        .menu-icon {
+            width: 18px;
+            text-align: center;
+            color: #4b5563;
+        }
+
         @media (max-width: 900px) {
             .header,
             .card-container,
@@ -235,7 +323,7 @@
 <body>
 
 <div class="header">
-    <div class="title">Admin Antrian ✨</div>
+    <div class="title">Admin Antrian </div>
 
     <div class="header-actions">
         <div class="user-info">
@@ -244,17 +332,34 @@
         </div>
 
         @if(auth()->user()->serviceRelation)
-    <div class="user-info">
-        Layanan: <strong>{{ auth()->user()->serviceRelation->name }}</strong>
-    </div>
-@endif
+            <div class="user-info">
+                Layanan: <strong>{{ auth()->user()->serviceRelation->name }}</strong>
+            </div>
+        @endif
 
-        <button class="btn btn-reset" onclick="resetQueue(this)">🔄 Reset Antrean</button>
+        <button class="btn btn-reset" onclick="resetQueue(this)"> Reset Antrean</button>
 
-        <form action="{{ route('logout') }}" method="POST" style="margin:0;">
-            @csrf
-            <button type="submit" class="btn btn-logout">Logout</button>
-        </form>
+        <div class="user-dropdown">
+            <button class="user-dropdown-toggle" onclick="toggleUserMenu()">
+                <span>{{ strtoupper(auth()->user()->name) }}</span>
+                <span class="user-icon">⌄</span>
+            </button>
+
+            <div class="user-dropdown-menu" id="userDropdownMenu">
+                <a href="{{ route('profile.index') }}" class="user-dropdown-item">
+                    <span class="menu-icon">☺</span>
+                    <span>Profil Saya</span>
+                </a>
+
+                <form action="{{ route('logout') }}" method="POST" style="margin:0;">
+                    @csrf
+                    <button type="submit" class="user-dropdown-item logout-item">
+                        <span class="menu-icon">↪</span>
+                        <span>Keluar</span>
+                    </button>
+                </form>
+            </div>
+        </div>
 
         <div class="officer-status">Officer Panel Active</div>
     </div>
@@ -314,6 +419,21 @@
 
 <script>
 let allQueues = [];
+
+/* dropdown user */
+function toggleUserMenu() {
+    const menu = document.getElementById('userDropdownMenu');
+    menu.classList.toggle('show');
+}
+
+document.addEventListener('click', function(event) {
+    const dropdown = document.querySelector('.user-dropdown');
+    const menu = document.getElementById('userDropdownMenu');
+
+    if (dropdown && !dropdown.contains(event.target)) {
+        menu.classList.remove('show');
+    }
+});
 
 /* FORMAT JAM */
 function formatWaktu(dateString) {
