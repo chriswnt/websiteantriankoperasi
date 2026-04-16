@@ -41,8 +41,16 @@ class OfficerController extends Controller
             ->where('service_id', $serviceId)
             ->whereDate('created_at', today());
 
+        // FIX: Mapping data untuk memformat zona waktu langsung di backend (Asia/Jakarta)
+        $queues = (clone $query)->orderBy('id', 'desc')->get()->map(function ($queue) {
+            $queue->waktu_antri = $queue->created_at ? \Carbon\Carbon::parse($queue->created_at)->timezone('Asia/Jakarta')->format('H:i:s') : '-';
+            $queue->waktu_diproses = $queue->called_at ? \Carbon\Carbon::parse($queue->called_at)->timezone('Asia/Jakarta')->format('H:i:s') : '-';
+            $queue->waktu_selesai = $queue->done_at ? \Carbon\Carbon::parse($queue->done_at)->timezone('Asia/Jakarta')->format('H:i:s') : '-';
+            return $queue;
+        });
+
         return response()->json([
-            'queues' => (clone $query)->orderBy('id', 'desc')->get(),
+            'queues' => $queues,
             'total' => (clone $query)->count(),
             'current' => (clone $query)
                 ->where('status', 'called')

@@ -81,6 +81,7 @@
             font-size: 14px;
             color: #888;
             text-transform: uppercase;
+            line-height: 1.5;
             letter-spacing: 1px;
         }
 
@@ -435,21 +436,6 @@ document.addEventListener('click', function(event) {
     }
 });
 
-/* FORMAT JAM */
-function formatWaktu(dateString) {
-    if (!dateString) return '-';
-
-    const d = new Date(dateString);
-
-    if (isNaN(d.getTime())) return '-';
-
-    const jam = String(d.getHours()).padStart(2, '0');
-    const menit = String(d.getMinutes()).padStart(2, '0');
-    const detik = String(d.getSeconds()).padStart(2, '0');
-
-    return `${jam}:${menit}:${detik}`;
-}
-
 /* LOAD DATA OFFICER */
 function loadOfficer() {
     fetch('/officer/data', {
@@ -523,13 +509,14 @@ function renderTable(data) {
             aksiHtml = `<span style="color:#2ecc71; font-weight:bold;">✔ Selesai</span>`;
         }
 
+        // FIX: Langsung gunakan waktu yang sudah dikembalikan dan disamakan oleh Controller
         html += `
         <tr>
             <td><strong>${noAntrean}</strong></td>
             <td>${serviceName}</td>
-            <td>${formatWaktu(q.created_at)}</td>
-            <td>${formatWaktu(q.called_at)}</td>
-            <td>${formatWaktu(q.done_at)}</td>
+            <td>${q.waktu_antri ?? '-'}</td>
+            <td>${q.waktu_diproses ?? '-'}</td>
+            <td>${q.waktu_selesai ?? '-'}</td>
             <td><span class="status-badge" style="background:${statusColor}">${q.status}</span></td>
             <td>${aksiHtml}</td>
         </tr>`;
