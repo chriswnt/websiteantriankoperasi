@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>Dashboard Antrean Real-time</title>
+
     <style>
         body { 
             margin: 0; 
@@ -12,6 +13,7 @@
             overflow: hidden; 
             cursor: pointer; 
         }
+
         .header { 
             background: #114338; 
             color: #FBB03C; 
@@ -21,7 +23,14 @@
             align-items: center; 
             border-bottom: 4px solid #FBB03C; 
         }
-        .container { display: flex; gap: 25px; padding: 25px 40px; }
+
+        .container { 
+            display: flex; 
+            gap: 25px; 
+            padding: 25px 40px; 
+            align-items: stretch; 
+        }
+
         .main-queue { 
             background: #FBB03C; 
             color: #114338; 
@@ -29,20 +38,55 @@
             text-align: center; 
             padding: 80px 40px; 
             border-radius: 15px; 
+            box-sizing: border-box;
         }
-        .queue-number { font-size: 200px; font-weight: bold; margin: 20px 0; }
-        .layanan { font-size: 40px; font-weight: bold; }
-        
-        .video { width: 50%; }
+
+        .queue-number { 
+            font-size: 200px; 
+            font-weight: bold; 
+            margin: 20px 0; 
+        }
+
+        .layanan { 
+            font-size: 40px; 
+            font-weight: bold; 
+        }
+
+        /* VIDEO FIX FINAL */
+        .video { 
+            width: 50%;
+            display: flex;
+        }
+
+        .video-box{
+            width: 100%;
+            height: 100%;
+            border: 4px solid #FBB03C;
+            border-radius: 15px;
+            overflow: hidden;
+            box-sizing: border-box;
+            background: #000;
+            position: relative;
+        }
+
         .video iframe { 
-            width: 100%; 
-            height: 420px; 
-            border-radius: 15px; 
-            border: 4px solid #FBB03C; 
-            pointer-events: none; 
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 160%;
+            height: 160%;
+            transform: translate(-50%, -50%);
+            border: none;
+            pointer-events: none;
+            display: block;
         }
-        
-        .loket-container { display: flex; gap: 20px; padding: 0 40px 40px 40px; }
+
+        .loket-container { 
+            display: flex; 
+            gap: 20px; 
+            padding: 0 40px 40px 40px; 
+        }
+
         .loket-box { 
             flex: 1; 
             background: #114338; 
@@ -52,9 +96,12 @@
             text-align: center; 
             border: 3px solid #FBB03C; 
         }
-        .nomor { font-size: 90px; font-weight: bold; }
-        
-        /* Notifikasi Kecil di Pojok */
+
+        .nomor { 
+            font-size: 90px; 
+            font-weight: bold; 
+        }
+
         .status-audio {
             position: fixed;
             bottom: 10px;
@@ -66,15 +113,58 @@
         }
     </style>
 </head>
+
 <body onclick="aktifkanAudio()">
 
-<div class="status-audio" id="status-text">Status: 🔇 Klik layar untuk aktifkan suara</div>
+@php
+    $youtubeUrl = $setting->youtube ?? '';
+
+    $youtubeParams = 'enablejsapi=1&autoplay=1&mute=1&loop=1&controls=0&modestbranding=1&rel=0&playsinline=1';
+
+    $youtubeEmbedUrl = 'https://www.youtube.com/embed/jmKRgqWGrWc?' . $youtubeParams . '&playlist=jmKRgqWGrWc';
+
+    if (!empty($youtubeUrl)) {
+        $parsedUrl = parse_url(trim($youtubeUrl));
+        $host = $parsedUrl['host'] ?? '';
+        $path = $parsedUrl['path'] ?? '';
+        $queryString = $parsedUrl['query'] ?? '';
+
+        parse_str($queryString, $query);
+
+        $videoId = null;
+        $playlistId = $query['list'] ?? null;
+
+        if (str_contains($host, 'youtu.be')) {
+            $videoId = trim($path, '/');
+        } elseif (str_contains($host, 'youtube.com')) {
+            if (!empty($query['v'])) {
+                $videoId = $query['v'];
+            }
+
+            if (str_contains($path, '/embed/')) {
+                $segments = explode('/embed/', $path);
+                $videoId = $segments[1] ?? $videoId;
+            }
+        }
+
+        if (!empty($playlistId)) {
+            $youtubeEmbedUrl = 'https://www.youtube.com/embed/videoseries?list=' . $playlistId . '&' . $youtubeParams;
+        } elseif (!empty($videoId)) {
+            $youtubeEmbedUrl = 'https://www.youtube.com/embed/' . $videoId . '?' . $youtubeParams . '&playlist=' . $videoId;
+        }
+    }
+@endphp
+
+<div class="status-audio" id="status-text">
+    Status: 🔇 Klik layar untuk aktifkan suara
+</div>
 
 <div class="header">
     <div>
         <h2>{{ $setting->title ?? 'NAMA INSTANSI' }}</h2>
         <p>{{ $setting->address ?? '-' }}</p>
     </div>
+
     <div style="text-align: right;">
         <div id="jam" style="font-size: 28px; font-weight: bold;"></div>
         <div id="tanggal"></div>
@@ -82,6 +172,7 @@
 </div>
 
 <div class="container">
+
     <div class="main-queue">
         <h2>ANTREAN DIPANGGIL</h2>
         <div class="queue-number" id="main-number">000</div>
@@ -89,42 +180,58 @@
     </div>
 
     <div class="video">
-        <iframe id="video-yt" 
-            src="https://www.youtube.com/embed/jmKRgqWGrWc?enablejsapi=1&autoplay=1&mute=1&loop=1&playlist=jmKRgqWGrWc" 
-            allowfullscreen>
-        </iframe>
+        <div class="video-box">
+            <iframe id="video-yt" 
+                src="{{ $youtubeEmbedUrl }}"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen>
+            </iframe>
+        </div>
     </div>
+
 </div>
 
 <div class="loket-container">
-    <div class="loket-box"><h3>TELLER</h3><div class="nomor" id="teller">-</div></div>
-    <div class="loket-box"><h3>ADMINISTRASI</h3><div class="nomor" id="administrasi">-</div></div>
-    <div class="loket-box"><h3>PINJAMAN</h3><div class="nomor" id="pinjaman">-</div></div>
+    <div class="loket-box">
+        <h3>TELLER</h3>
+        <div class="nomor" id="teller">-</div>
+    </div>
+
+    <div class="loket-box">
+        <h3>ADMINISTRASI</h3>
+        <div class="nomor" id="administrasi">-</div>
+    </div>
+
+    <div class="loket-box">
+        <h3>PINJAMAN</h3>
+        <div class="nomor" id="pinjaman">-</div>
+    </div>
 </div>
 
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
-// 1. YOUTUBE API
 var player;
+
 function onYouTubeIframeAPIReady() {
     player = new YT.Player('video-yt');
 }
 
-// 2. JAM & TANGGAL
 function updateClock(){
     const now = new Date();
     document.getElementById("jam").innerHTML = now.toLocaleTimeString('id-ID');
-    document.getElementById("tanggal").innerHTML = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    document.getElementById("tanggal").innerHTML = now.toLocaleDateString('id-ID', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
 }
+
 setInterval(updateClock, 1000);
 updateClock();
 
-// 3. LOGIKA SUARA & ANTREAN
 let speechQueue = [];
 let isSpeaking = false;
-let previousMainNumber = null; // 🔥 TAMBAHAN: Menyimpan nomor agar tidak dipanggil dobel
+let previousMainNumber = null;
 
 function panggilSuara(nomor, layanan) {
     if (isSpeaking) {
@@ -133,26 +240,23 @@ function panggilSuara(nomor, layanan) {
     }
 
     isSpeaking = true;
-    window.speechSynthesis.cancel(); // Reset jika ada suara macet
+    window.speechSynthesis.cancel();
 
-    // Pelankan Video
     if (player && typeof player.setVolume === "function") player.setVolume(10);
 
-    // Langsung panggil suara manusia (Tanpa file MP3 eksternal agar tidak diblokir)
     setTimeout(() => {
         const synth = window.speechSynthesis;
         const eja = nomor.split('').join(' ');
         const msg = new SpeechSynthesisUtterance(`Nomor Antrean, ${eja}, Silakan menuju, ${layanan}`);
-        
+
         msg.lang = 'id-ID';
         msg.rate = 0.8;
-        msg.volume = 1;
 
         msg.onend = function() {
             setTimeout(() => {
                 if (player && typeof player.setVolume === "function") player.setVolume(100);
                 isSpeaking = false;
-                // Cek apakah ada antrean suara berikutnya
+
                 if (speechQueue.length > 0) {
                     const next = speechQueue.shift();
                     panggilSuara(next.nomor, next.layanan);
@@ -160,80 +264,58 @@ function panggilSuara(nomor, layanan) {
             }, 1000);
         };
 
-        msg.onerror = function() { isSpeaking = false; };
-
         synth.speak(msg);
-        console.log("📢 Sedang memanggil: " + msg.text);
     }, 500);
 }
 
-// 4. LOAD DATA AJAX
 function loadQueue(withSound = false){
     fetch('/dashboard/data') 
     .then(res => res.json())
     .then(data => {
-        // 🔥 TAMBAHAN: Logika jika antrean kosong/habis direset, ubah jadi "000" dan "-"
-        let mainNum = (data.main_number && data.main_number !== '-') ? data.main_number : '000';
-        let mainSvc = (data.main_service && data.main_service !== '-') ? data.main_service.toUpperCase() : '-';
+
+        let mainNum = data.main_number && data.main_number !== '-' ? data.main_number : '000';
+        let mainSvc = data.main_service && data.main_service !== '-' ? data.main_service.toUpperCase() : '-';
 
         document.getElementById('main-number').innerText = mainNum;
         document.getElementById('layanan-txt').innerText = mainSvc;
-        
-        document.getElementById('teller').innerText = (data.teller && data.teller !== '-') ? data.teller : '000';
-        document.getElementById('administrasi').innerText = (data.administrasi && data.administrasi !== '-') ? data.administrasi : '000';
-        document.getElementById('pinjaman').innerText = (data.pinjaman && data.pinjaman !== '-') ? data.pinjaman : '000';
 
-        // 🔥 TAMBAHAN: Pastikan suara tidak manggil "000" dan tidak dobel manggil nomor yg sama
-        if(withSound && mainNum !== '000' && mainNum !== '-') {
+        document.getElementById('teller').innerText = data.teller || '000';
+        document.getElementById('administrasi').innerText = data.administrasi || '000';
+        document.getElementById('pinjaman').innerText = data.pinjaman || '000';
+
+        if(withSound && mainNum !== '000') {
             if (mainNum !== previousMainNumber) {
                 panggilSuara(mainNum, mainSvc);
-                previousMainNumber = mainNum; // Update ingatan ke nomor terbaru
+                previousMainNumber = mainNum;
             }
-        } else if (mainNum === '000') {
-            previousMainNumber = null; // Lupakan memori nomor jika sudah direset ke 000
         }
-    })
-    .catch(err => console.error('Gagal ambil data:', err));
+    });
 }
 
-// 5. AKTIVASI AUDIO
 function aktifkanAudio() {
     window.speechSynthesis.speak(new SpeechSynthesisUtterance(""));
     if (player && typeof player.unMute === "function") player.unMute();
     document.getElementById('status-text').innerHTML = "Status: ✅ Suara Aktif";
-    console.log("✅ Izin suara didapat!");
 }
 
-// 🔥 TAMBAHAN 6. FUNGSI AUTO-REFRESH SAAT PERGANTIAN HARI (JAM 00:00:01)
 function autoRefreshAtMidnight() {
     let now = new Date();
-    let night = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate() + 1, 
-        0, 0, 1 
-    );
-    let msToMidnight = night.getTime() - now.getTime();
-    setTimeout(function() {
-        window.location.reload(true); 
-    }, msToMidnight);
+    let night = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1,0,0,1);
+    let ms = night - now;
+
+    setTimeout(() => location.reload(true), ms);
 }
 
-// 7. PUSHER
 var pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
     cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
     forceTLS: true
 });
 
 var channel = pusher.subscribe('antrean-channel');
-channel.bind('AntreanUpdate', () => {
-    console.log("⚡ Sinyal masuk!");
-    loadQueue(true);
-});
+channel.bind('AntreanUpdate', () => loadQueue(true));
 
-// Jalankan load pertama
 loadQueue(false);
-autoRefreshAtMidnight(); // 🔥 TAMBAHAN: Jalankan timer refresh
+autoRefreshAtMidnight();
 </script>
 
 </body>

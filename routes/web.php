@@ -60,7 +60,7 @@ Route::middleware('auth')->group(function () {
 | OFFICER
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:officer'])->group(function () {
+Route::middleware(['auth', 'role:officer', 'last_seen'])->group(function () {
     Route::get('/officer', [OfficerController::class, 'index'])->name('officer.index');
     Route::get('/officer/data', [OfficerController::class, 'data']);
     Route::post('/officer/call/{id}', [OfficerController::class, 'call']);
@@ -80,5 +80,5 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::delete('/admin/user/{id}', [AdminController::class, 'deleteUser'])->name('admin.user.delete');
     Route::get('/admin/setting', [AdminController::class, 'setting'])->name('admin.setting');
     Route::post('/admin/setting/update', [AdminController::class, 'updateSetting'])->name('admin.setting.update');
-    Route::get('/admin/dashboard/stats', [App\Http\Controllers\AdminController::class, 'getDashboardStats']);
+    Route::get('/admin/dashboard/stats', [AdminController::class, 'getDashboardStats']);
 });

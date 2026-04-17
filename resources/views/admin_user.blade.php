@@ -1,271 +1,328 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manajemen User</title>
 
     <style>
-        * {
-            box-sizing: border-box;
+        *{
+            box-sizing:border-box;
         }
 
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f4f6f9;
-            color: #333;
+        body{
+            margin:0;
+            font-family:Arial, sans-serif;
+            display:flex;
+            min-height:100vh;
+            background:#f4f6f9;
         }
 
-        .layout {
-            display: flex;
-            min-height: 100vh;
+        /* SIDEBAR */
+        .sidebar{
+            width:220px;
+            background:#114338;
+            color:white;
+            min-height:100vh;
+            padding:20px 16px;
+            display:flex;
+            flex-direction:column;
+            flex-shrink:0;
         }
 
-        .sidebar {
-            width: 240px;
-            background: #114338;
-            color: white;
-            padding: 24px 20px;
+        .sidebar h2{
+            color:#FBB03C;
+            margin:10px 0 20px;
+            font-size:22px;
+            font-weight:bold;
         }
 
-        .sidebar h2 {
-            margin-top: 0;
-            color: #FBB03C;
-            font-size: 24px;
+        .sidebar .menu{
+            display:flex;
+            flex-direction:column;
+            gap:8px;
         }
 
-        .sidebar a {
-            display: block;
-            color: white;
-            text-decoration: none;
-            margin: 14px 0;
-            padding: 10px 12px;
-            border-radius: 8px;
-            transition: 0.2s;
+        .sidebar a{
+            display:block;
+            color:white;
+            padding:12px 14px;
+            text-decoration:none;
+            border-radius:8px;
+            transition:0.2s ease-in-out;
+            font-weight:600;
         }
 
-        .sidebar a:hover,
-        .sidebar a.active {
-            background: rgba(255,255,255,0.12);
+        .sidebar a:hover{
+            background:rgba(255,255,255,0.12);
         }
 
-        .logout-btn {
-            width: 100%;
-            margin-top: 20px;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            background: #e74c3c;
-            color: white;
-            cursor: pointer;
-            font-weight: bold;
+        .sidebar a.active{
+            background:rgba(255,255,255,0.14);
         }
 
-        .logout-btn:hover {
-            background: #c0392b;
+        .logout-form{
+            margin-top:20px;
         }
 
-        .content {
-            flex: 1;
-            padding: 30px;
+        .logout-btn{
+            margin-top:10px;
+            padding:12px;
+            background:#e74c3c;
+            color:white;
+            border:none;
+            cursor:pointer;
+            border-radius:8px;
+            width:100%;
+            font-weight:600;
+            transition:0.2s ease-in-out;
         }
 
-        .page-title {
-            margin: 0 0 20px 0;
-            font-size: 28px;
-            color: #2c3e50;
+        .logout-btn:hover{
+            background:#cf3f31;
         }
 
-        .grid {
-            display: grid;
-            grid-template-columns: 380px 1fr;
-            gap: 24px;
+        /* CONTENT */
+        .content{
+            flex:1;
+            background:#f4f6f9;
+            padding:24px;
         }
 
-        .card {
-            background: white;
-            border-radius: 14px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            padding: 22px;
+        .content h1{
+            margin:0 0 20px;
+            font-size:24px;
+            color:#1f3552;
         }
 
-        .card h3 {
-            margin-top: 0;
-            margin-bottom: 18px;
-            color: #2c3e50;
+        .layout{
+            display:grid;
+            grid-template-columns: 320px 1fr;
+            gap:18px;
+            align-items:start;
         }
 
-        .form-group {
-            margin-bottom: 14px;
+        .card{
+            background:white;
+            border-radius:14px;
+            box-shadow:0 4px 12px rgba(0,0,0,0.08);
+            padding:18px;
         }
 
-        label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 14px;
-            font-weight: bold;
-            color: #555;
+        .card h2{
+            margin:0 0 14px;
+            font-size:18px;
+            color:#1f3552;
         }
 
-        input, select {
-            width: 100%;
-            padding: 11px 12px;
-            border: 1px solid #dcdfe6;
-            border-radius: 8px;
-            font-size: 14px;
-            outline: none;
+        label{
+            display:block;
+            font-size:14px;
+            font-weight:600;
+            color:#333;
+            margin-bottom:6px;
         }
 
-        input:focus, select:focus {
-            border-color: #3498db;
+        input, select{
+            width:100%;
+            padding:10px 12px;
+            border:1px solid #d6dbe1;
+            border-radius:8px;
+            margin-bottom:12px;
+            font-size:14px;
+            outline:none;
         }
 
-        .btn-primary {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            background: #007bff;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
+        input:focus, select:focus{
+            border-color:#1b7cf0;
         }
 
-        .btn-primary:hover {
-            background: #0056b3;
+        .submit-btn{
+            width:100%;
+            padding:12px;
+            background:#1b7cf0;
+            color:white;
+            border:none;
+            border-radius:8px;
+            font-weight:700;
+            cursor:pointer;
         }
 
-        .btn-danger {
-            padding: 8px 12px;
-            border: none;
-            border-radius: 6px;
-            background: #dc3545;
-            color: white;
-            cursor: pointer;
-            font-size: 13px;
+        .submit-btn:hover{
+            background:#1368ca;
         }
 
-        .btn-danger:hover {
-            background: #b52b38;
+        .alert{
+            padding:12px 14px;
+            border-radius:8px;
+            margin-bottom:14px;
+            font-size:14px;
         }
 
-        .alert {
-            padding: 12px 14px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 14px;
+        .alert-success{
+            background:#eaf8ee;
+            color:#1f7a36;
+            border:1px solid #bfe7ca;
         }
 
-        .alert-success {
-            background: #eafaf1;
-            color: #1e8449;
-            border: 1px solid #b7e4c7;
+        .alert-error{
+            background:#fff1f1;
+            color:#b42318;
+            border:1px solid #f3c0c0;
         }
 
-        .alert-error {
-            background: #fdecea;
-            color: #c0392b;
-            border: 1px solid #f5b7b1;
+        .table-wrap{
+            overflow-x:auto;
         }
 
-        .table-wrap {
-            overflow-x: auto;
+        table{
+            width:100%;
+            border-collapse:collapse;
+            font-size:14px;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 650px;
+        thead th{
+            text-align:left;
+            padding:12px 12px;
+            background:#f2f4f7;
+            color:#234;
+            font-size:13px;
         }
 
-        th, td {
-            padding: 12px 14px;
-            border-bottom: 1px solid #eee;
-            text-align: left;
-            font-size: 14px;
+        tbody td{
+            padding:14px 12px;
+            border-bottom:1px solid #edf0f2;
+            color:#222;
+            vertical-align:middle;
         }
 
-        th {
-            background: #f8f9fb;
-            color: #34495e;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
+        .badge{
+            display:inline-block;
+            padding:6px 12px;
+            border-radius:999px;
+            font-size:12px;
+            font-weight:700;
         }
 
-        tr:hover td {
-            background: #fafafa;
+        .badge-officer{
+            background:#e8f5ea;
+            color:#1f8f43;
         }
 
-        .badge {
-            display: inline-block;
-            padding: 6px 10px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: bold;
+        .badge-admin{
+            background:#e9eefc;
+            color:#2d5bdb;
         }
 
-        .badge-admin {
-            background: #e8f1ff;
-            color: #1d4ed8;
+        .delete-form{
+            margin:0;
         }
 
-        .badge-officer {
-            background: #ecfdf3;
-            color: #15803d;
+        .delete-btn{
+            padding:8px 12px;
+            border:none;
+            border-radius:8px;
+            background:#e74c3c;
+            color:white;
+            font-size:12px;
+            font-weight:700;
+            cursor:pointer;
         }
 
-        .empty-text {
-            color: #888;
-            font-style: italic;
+        .delete-btn:hover{
+            background:#cf3f31;
         }
 
-        .self-note {
-            color: #888;
-            font-size: 13px;
+        .helper{
+            font-size:12px;
+            color:#666;
+            margin-top:-6px;
+            margin-bottom:12px;
         }
 
-        @media (max-width: 980px) {
-            .grid {
-                grid-template-columns: 1fr;
+        .stats{
+            margin-bottom:18px;
+        }
+
+        .stats-card{
+            background:white;
+            border-radius:14px;
+            box-shadow:0 4px 12px rgba(0,0,0,0.08);
+            padding:18px;
+            max-width:260px;
+            border-top:4px solid #114338;
+        }
+
+        .stats-card h3{
+            margin:0 0 10px;
+            font-size:16px;
+            color:#333;
+        }
+
+        .stats-card h1{
+            margin:0;
+            color:#111;
+            font-size:40px;
+            text-align:center;
+        }
+
+        @media (max-width: 900px){
+            .layout{
+                grid-template-columns:1fr;
+            }
+        }
+
+        @media (max-width: 768px){
+            body{
+                flex-direction:column;
             }
 
-            .sidebar {
-                width: 100%;
+            .sidebar{
+                width:100%;
+                min-height:auto;
             }
 
-            .layout {
-                flex-direction: column;
+            .content{
+                padding:18px;
             }
         }
     </style>
 </head>
 <body>
 
-<div class="layout">
     <div class="sidebar">
         <h2>ADMIN</h2>
 
-        <a href="{{ route('admin.index') }}">Dashboard</a>
-        <a href="{{ route('admin.user') }}" class="active">Manajemen User</a>
-        <a href="{{ route('admin.setting') }}">Kelola Tampilan</a>
+        <div class="menu">
+            <a href="/admin" class="{{ request()->is('admin') ? 'active' : '' }}">Dashboard</a>
+            <a href="/admin/user" class="{{ request()->is('admin/user') ? 'active' : '' }}">Manajemen User</a>
+            <a href="/admin/setting" class="{{ request()->is('admin/setting') ? 'active' : '' }}">Kelola Tampilan</a>
+        </div>
 
-        <form action="{{ route('logout') }}" method="POST">
+        <form action="{{ route('logout') }}" method="POST" class="logout-form">
             @csrf
             <button type="submit" class="logout-btn">Logout</button>
         </form>
     </div>
 
     <div class="content">
-        <h1 class="page-title">Manajemen User</h1>
+        <h1>Manajemen User</h1>
+
+        <div class="stats">
+            <div class="stats-card">
+                <h3>Jumlah User</h3>
+                <h1>{{ $totalUsers ?? $users->count() }}</h1>
+            </div>
+        </div>
 
         @if(session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
+            <div class="alert alert-success">
+                {{ session('success') }}
+            </div>
         @endif
 
         @if(session('error'))
-            <div class="alert alert-error">{{ session('error') }}</div>
+            <div class="alert alert-error">
+                {{ session('error') }}
+            </div>
         @endif
 
         @if($errors->any())
@@ -278,64 +335,57 @@
             </div>
         @endif
 
-        <div class="grid">
+        <div class="layout">
             <div class="card">
-                <h3>Tambah User Baru</h3>
+                <h2>Tambah User Baru</h2>
 
-                <form method="POST" action="{{ route('admin.user.store') }}">
+                <form action="{{ route('admin.user.store') }}" method="POST">
                     @csrf
 
-                    <div class="form-group">
-                        <label for="name">Nama</label>
-                        <input type="text" id="name" name="name" placeholder="Masukkan nama" value="{{ old('name') }}" required>
-                    </div>
+                    <label>Nama</label>
+                    <input type="text" name="name" placeholder="Masukkan nama" value="{{ old('name') }}">
 
-                    <div class="form-group">
-                        <label for="email">Email</label>
-                        <input type="email" id="email" name="email" placeholder="Masukkan email" value="{{ old('email') }}" required>
-                    </div>
+                    <label>Email</label>
+                    <input type="email" name="email" placeholder="Masukkan email" value="{{ old('email') }}">
 
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" name="password" placeholder="Masukkan password" required>
-                    </div>
+                    <label>Password</label>
+                    <input type="password" name="password" placeholder="Masukkan password">
 
-                    <div class="form-group">
-                        <label for="roleSelect">Role</label>
-                        <select name="role" id="roleSelect" onchange="toggleService()" required>
-                            <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
-                            <option value="officer" {{ old('role') == 'officer' ? 'selected' : '' }}>Officer</option>
-                        </select>
-                    </div>
+                    <label>Role</label>
+                    <select name="role" id="roleSelect">
+                        <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                        <option value="officer" {{ old('role') == 'officer' ? 'selected' : '' }}>Officer</option>
+                    </select>
 
-                    <div class="form-group" id="serviceBox" style="display:none;">
-                        <label for="service_id">Layanan Officer</label>
-                        <select name="service_id" id="service_id">
-                            <option value="">Pilih Layanan</option>
+                    <div id="serviceWrapper" style="{{ old('role') == 'officer' ? '' : 'display:none;' }}">
+                        <label>Layanan Officer</label>
+                        <select name="service_id">
+                            <option value="">Pilih layanan</option>
                             @foreach($services as $service)
                                 <option value="{{ $service->id }}" {{ old('service_id') == $service->id ? 'selected' : '' }}>
                                     {{ $service->name }}
                                 </option>
                             @endforeach
                         </select>
+                        <div class="helper">Wajib dipilih jika role = officer</div>
                     </div>
 
-                    <button type="submit" class="btn-primary">Tambah User</button>
+                    <button type="submit" class="submit-btn">Tambah User</button>
                 </form>
             </div>
 
             <div class="card">
-                <h3>Daftar User</h3>
+                <h2>Daftar User</h2>
 
                 <div class="table-wrap">
                     <table>
                         <thead>
                             <tr>
-                                <th>Nama</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Layanan</th>
-                                <th>Aksi</th>
+                                <th>NAMA</th>
+                                <th>EMAIL</th>
+                                <th>ROLE</th>
+                                <th>LAYANAN</th>
+                                <th>AKSI</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -350,22 +400,24 @@
                                             <span class="badge badge-officer">Officer</span>
                                         @endif
                                     </td>
-                                    <td>{{ $user->serviceRelation->name ?? '-' }}</td>
+                                    <td>
+                                        {{ $user->serviceRelation ? $user->serviceRelation->name : '-' }}
+                                    </td>
                                     <td>
                                         @if(auth()->id() !== $user->id)
-                                            <form action="{{ route('admin.user.delete', $user->id) }}" method="POST" onsubmit="return confirm('Yakin hapus user ini?')">
+                                            <form action="{{ route('admin.user.delete', $user->id) }}" method="POST" class="delete-form" onsubmit="return confirm('Yakin ingin menghapus user ini?')">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn-danger">Hapus</button>
+                                                <button type="submit" class="delete-btn">Hapus</button>
                                             </form>
                                         @else
-                                            <span class="self-note">Akun aktif</span>
+                                            <span style="font-size:12px; color:#777;">Akun aktif</span>
                                         @endif
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="empty-text">Belum ada user.</td>
+                                    <td colspan="5" style="text-align:center; color:#777;">Belum ada data user.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -374,16 +426,22 @@
             </div>
         </div>
     </div>
-</div>
 
-<script>
-    function toggleService() {
-        const role = document.getElementById('roleSelect').value;
-        document.getElementById('serviceBox').style.display = role === 'officer' ? 'block' : 'none';
-    }
+    <script>
+        const roleSelect = document.getElementById('roleSelect');
+        const serviceWrapper = document.getElementById('serviceWrapper');
 
-    toggleService();
-</script>
+        function toggleServiceField() {
+            if (roleSelect.value === 'officer') {
+                serviceWrapper.style.display = 'block';
+            } else {
+                serviceWrapper.style.display = 'none';
+            }
+        }
+
+        roleSelect.addEventListener('change', toggleServiceField);
+        toggleServiceField();
+    </script>
 
 </body>
 </html>

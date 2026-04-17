@@ -8,6 +8,7 @@ use App\Models\Setting;
 use App\Models\Queue;
 use App\Models\Service;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class AdminController extends Controller
 {
@@ -15,8 +16,9 @@ class AdminController extends Controller
     {
         $totalUsers = User::count();
 
-        // Mengambil semua user yang rolenya 'officer' beserta data layanannya
-        $officers = User::where('role', 'officer')->with('serviceRelation')->get();
+        $officers = User::where('role', 'officer')
+            ->with('serviceRelation')
+            ->get();
 
         return view('admin', compact('totalUsers', 'officers'));
     }
@@ -31,8 +33,9 @@ class AdminController extends Controller
     {
         $users = User::with('serviceRelation')->orderBy('id', 'desc')->get();
         $services = Service::orderBy('id', 'asc')->get();
+        $totalUsers = User::count();
 
-        return view('admin_user', compact('users', 'services'));
+        return view('admin_user', compact('users', 'services', 'totalUsers'));
     }
 
     public function storeUser(Request $request)
@@ -120,48 +123,57 @@ class AdminController extends Controller
         return back()->with('success', 'Tampilan berhasil diperbarui.');
     }
 
-    /**
-     * Endpoint API Statistik Real-time yang dihubungkan ke service_id Officer
-     */
     public function getDashboardStats()
     {
         try {
-            $officers = \App\Models\User::where('role', 'officer')->get();
+            $officers = User::where('role', 'officer')->get();
             $stats = [];
-            
+            $now = now();
+
             foreach ($officers as $officer) {
+                $isOnline = false;
+
+                if (!empty($officer->last_seen)) {
+                    $lastSeen = $officer->last_seen instanceof Carbon
+                        ? $officer->last_seen
+                        : Carbon::parse($officer->last_seen);
+
+                    $isOnline = $lastSeen->diffInMinutes($now) <= 2;
+                }
+
                 if (!$officer->service_id) {
-                    $stats['officer_' . $officer->id] = ['total_done' => 0, 'avg_time' => '-'];
+                    $stats['officer_' . $officer->id] = [
+                        'total_done' => 0,
+                        'avg_time' => '-',
+                        'is_online' => $isOnline
+                    ];
                     continue;
                 }
 
-                $completedQueues = \App\Models\Queue::whereDate('created_at', today())
+                $completedQueues = Queue::whereDate('created_at', today())
                     ->where('service_id', $officer->service_id)
                     ->where('status', 'done')
                     ->get();
 
-                $totalDone = $completedQueues->count(); // Untuk jumlah tampil di angka besar
-                
+                $totalDone = $completedQueues->count();
+
                 $totalSeconds = 0;
-                $validAverageCount = 0; // FITUR BARU: Hanya hitung yang datanya sempurna
+                $validAverageCount = 0;
 
                 foreach ($completedQueues as $q) {
-                    // Hanya hitung durasi JIKA kedua waktu ini ada isinya (tidak null)
                     if (!empty($q->called_at) && !empty($q->done_at)) {
-                        $start = \Carbon\Carbon::parse($q->called_at);
-                        $end = \Carbon\Carbon::parse($q->done_at);
-                        
+                        $start = Carbon::parse($q->called_at);
+                        $end = Carbon::parse($q->done_at);
+
                         $totalSeconds += abs($end->diffInSeconds($start));
-                        $validAverageCount++; // Tambahkan 1 ke pembagi yang valid
+                        $validAverageCount++;
                     }
                 }
 
-                // Kalkulasi rata-rata menggunakan $validAverageCount, BUKAN total antrean keseluruhan
                 $avgSeconds = $validAverageCount > 0 ? floor($totalSeconds / $validAverageCount) : 0;
                 $m = floor($avgSeconds / 60);
                 $s = $avgSeconds % 60;
 
-                // Format tampilan
                 if ($validAverageCount == 0) {
                     $formatWaktu = "-";
                 } elseif ($m > 0) {
@@ -171,17 +183,17 @@ class AdminController extends Controller
                 }
 
                 $stats['officer_' . $officer->id] = [
-                    'total_done' => $totalDone, // Tetap tampilkan 7 antrean selesai
-                    'avg_time' => $formatWaktu  // Waktu akurat sesuai data yang valid
+                    'total_done' => $totalDone,
+                    'avg_time' => $formatWaktu,
+                    'is_online' => $isOnline
                 ];
             }
 
             return response()->json([
                 'status' => 'success',
-                'total_users' => \App\Models\User::count(),
+                'total_users' => User::count(),
                 'stats' => $stats
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
@@ -189,4 +201,4 @@ class AdminController extends Controller
             ], 500);
         }
     }
-}       
+}
