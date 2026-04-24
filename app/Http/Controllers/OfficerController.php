@@ -14,9 +14,6 @@ class OfficerController extends Controller
         return view('officer');
     }
 
-    /**
-     * Ambil service_id langsung dari user yang login
-     */
     private function getServiceId()
     {
         return Auth::user()->service_id;
@@ -41,7 +38,6 @@ class OfficerController extends Controller
             ->where('service_id', $serviceId)
             ->whereDate('created_at', today());
 
-        // FIX: Mapping data untuk memformat zona waktu langsung di backend (Asia/Jakarta)
         $queues = (clone $query)->orderBy('id', 'desc')->get()->map(function ($queue) {
             $queue->waktu_antri = $queue->created_at ? \Carbon\Carbon::parse($queue->created_at)->timezone('Asia/Jakarta')->format('H:i:s') : '-';
             $queue->waktu_diproses = $queue->called_at ? \Carbon\Carbon::parse($queue->called_at)->timezone('Asia/Jakarta')->format('H:i:s') : '-';
@@ -97,7 +93,7 @@ class OfficerController extends Controller
             $queue->save();
         }
 
-        event(new AntreanUpdate());
+        broadcast(new AntreanUpdate());
 
         return response()->json(['success' => true]);
     }
@@ -124,7 +120,7 @@ class OfficerController extends Controller
             $queue->save();
         }
 
-        event(new AntreanUpdate());
+        broadcast(new AntreanUpdate());
 
         return response()->json(['success' => true]);
     }
@@ -144,7 +140,7 @@ class OfficerController extends Controller
             ->where('service_id', $serviceId)
             ->delete();
 
-        event(new AntreanUpdate());
+        broadcast(new AntreanUpdate());
 
         return response()->json([
             'success' => true,

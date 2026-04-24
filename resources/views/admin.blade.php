@@ -254,7 +254,9 @@
     <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
     <script>
         function loadDashboardStats() {
-            fetch('/admin/dashboard/stats', {
+            fetch('/admin/dashboard/stats?time=' + new Date().getTime(), {
+                method: 'GET',
+                cache: 'no-store',
                 headers: {
                     'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
@@ -317,14 +319,51 @@
             });
         }
 
+        Pusher.logToConsole = false;
+
         var pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
             cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
             forceTLS: true
         });
 
+        pusher.connection.bind('connected', function() {
+            console.log('Pusher admin connected');
+        });
+
+        pusher.connection.bind('error', function(err) {
+            console.error('Pusher admin error:', err);
+        });
+
         var channel = pusher.subscribe('antrean-channel');
-        channel.bind('AntreanUpdate', function() {
+
+        channel.bind('pusher:subscription_succeeded', function() {
+            console.log('Admin berhasil subscribe antrean-channel');
+        });
+
+        channel.bind('AntreanUpdate', function(data) {
+            console.log('Event AntreanUpdate diterima admin:', data);
             loadDashboardStats();
+        });
+
+        channel.bind('.AntreanUpdate', function(data) {
+            console.log('Event .AntreanUpdate diterima admin:', data);
+            loadDashboardStats();
+        });
+
+        channel.bind('App\\Events\\AntreanUpdate', function(data) {
+            console.log('Event App\\Events\\AntreanUpdate diterima admin:', data);
+            loadDashboardStats();
+        });
+
+        channel.bind_global(function(eventName, data) {
+            if (
+                eventName === 'AntreanUpdate' ||
+                eventName === '.AntreanUpdate' ||
+                eventName === 'App\\Events\\AntreanUpdate'
+            ) {
+                console.log('Global event admin:', eventName, data);
+                loadDashboardStats();
+            }
         });
 
         loadDashboardStats();

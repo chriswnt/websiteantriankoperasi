@@ -79,6 +79,8 @@ class DashboardController extends Controller
             'teller'       => $teller ? ($teller->queue_number ?? $teller->id) : '000',
             'administrasi' => $administrasi ? ($administrasi->queue_number ?? $administrasi->id) : '000',
             'pinjaman'     => $pinjaman ? ($pinjaman->queue_number ?? $pinjaman->id) : '000',
-        ]);
+        ])->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+          ->header('Pragma', 'no-cache')
+          ->header('Expires', 'Sat, 01 Jan 2000 00:00:00 GMT');
     }
 }

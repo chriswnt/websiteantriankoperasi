@@ -52,7 +52,6 @@
             font-weight: bold; 
         }
 
-        /* VIDEO FIX FINAL */
         .video { 
             width: 50%;
             display: flex;
@@ -233,6 +232,33 @@ let speechQueue = [];
 let isSpeaking = false;
 let previousMainNumber = null;
 
+function formatNomorAntrean(nomor) {
+    nomor = String(nomor || '').trim();
+
+    let huruf = nomor.match(/[A-Za-z]+/)?.[0] || '';
+    let angka = nomor.match(/\d+/)?.[0] || '';
+
+    if (angka !== '') {
+        angka = parseInt(angka, 10);
+    }
+
+    if (huruf && angka !== '') {
+        return `${huruf.split('').join(' ')} ${angka}`;
+    }
+
+    return nomor;
+}
+
+function formatLayanan(layanan) {
+    layanan = String(layanan || '-').toLowerCase();
+
+    if (layanan === '-' || layanan === '') {
+        return 'konter pelayanan';
+    }
+
+    return `konter ${layanan}`;
+}
+
 function panggilSuara(nomor, layanan) {
     if (isSpeaking) {
         speechQueue.push({nomor, layanan});
@@ -246,11 +272,16 @@ function panggilSuara(nomor, layanan) {
 
     setTimeout(() => {
         const synth = window.speechSynthesis;
-        const eja = nomor.split('').join(' ');
-        const msg = new SpeechSynthesisUtterance(`Nomor Antrean, ${eja}, Silakan menuju, ${layanan}`);
+
+        const nomorDibaca = formatNomorAntrean(nomor);
+        const layananDibaca = formatLayanan(layanan);
+
+        const msg = new SpeechSynthesisUtterance(`Nomor Antrean, ${nomorDibaca}. Silakan menuju ${layananDibaca}.`);
 
         msg.lang = 'id-ID';
         msg.rate = 0.8;
+        msg.pitch = 1;
+        msg.volume = 1;
 
         msg.onend = function() {
             setTimeout(() => {
@@ -269,7 +300,14 @@ function panggilSuara(nomor, layanan) {
 }
 
 function loadQueue(withSound = false){
-    fetch('/dashboard/data') 
+    fetch('/dashboard/data?time=' + new Date().getTime(), {
+        method: 'GET',
+        cache: 'no-store',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    }) 
     .then(res => res.json())
     .then(data => {
 
@@ -289,6 +327,9 @@ function loadQueue(withSound = false){
                 previousMainNumber = mainNum;
             }
         }
+    })
+    .catch(err => {
+        console.error('Gagal memuat data dashboard:', err);
     });
 }
 
@@ -306,13 +347,52 @@ function autoRefreshAtMidnight() {
     setTimeout(() => location.reload(true), ms);
 }
 
+Pusher.logToConsole = false;
+
 var pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
     cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
     forceTLS: true
 });
 
+pusher.connection.bind('connected', function() {
+    console.log('Pusher dashboard connected');
+});
+
+pusher.connection.bind('error', function(err) {
+    console.error('Pusher dashboard error:', err);
+});
+
 var channel = pusher.subscribe('antrean-channel');
-channel.bind('AntreanUpdate', () => loadQueue(true));
+
+channel.bind('pusher:subscription_succeeded', function() {
+    console.log('Dashboard berhasil subscribe antrean-channel');
+});
+
+channel.bind('AntreanUpdate', function(data) {
+    console.log('Event AntreanUpdate diterima dashboard:', data);
+    loadQueue(true);
+});
+
+channel.bind('.AntreanUpdate', function(data) {
+    console.log('Event .AntreanUpdate diterima dashboard:', data);
+    loadQueue(true);
+});
+
+channel.bind('App\\Events\\AntreanUpdate', function(data) {
+    console.log('Event App\\Events\\AntreanUpdate diterima dashboard:', data);
+    loadQueue(true);
+});
+
+channel.bind_global(function(eventName, data) {
+    if (
+        eventName === 'AntreanUpdate' ||
+        eventName === '.AntreanUpdate' ||
+        eventName === 'App\\Events\\AntreanUpdate'
+    ) {
+        console.log('Global event dashboard:', eventName, data);
+        loadQueue(true);
+    }
+});
 
 loadQueue(false);
 autoRefreshAtMidnight();
