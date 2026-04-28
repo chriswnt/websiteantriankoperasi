@@ -36,12 +36,27 @@ class DashboardController extends Controller
             ->latest('called_at')
             ->first();
 
+        $youtubeLinks = [];
+
+        if ($setting && !empty($setting->youtube)) {
+            $youtubeLinks = preg_split('/\r\n|\r|\n/', $setting->youtube);
+
+            $youtubeLinks = array_filter($youtubeLinks, function ($link) {
+                return trim($link) !== '';
+            });
+
+            $youtubeLinks = array_map('trim', $youtubeLinks);
+
+            $youtubeLinks = array_values($youtubeLinks);
+        }
+
         return view('dashboard', compact(
             'setting',
             'queue',
             'teller',
             'administrasi',
-            'pinjaman'
+            'pinjaman',
+            'youtubeLinks'
         ));
     }
 

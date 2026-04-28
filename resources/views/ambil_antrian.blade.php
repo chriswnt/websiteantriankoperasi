@@ -17,175 +17,159 @@
             --green-dark: #082d26;
             --gold: #FBB03C;
             --gold-dark: #d99222;
-            --soft: #f5f7f4;
-            --text: #143c34;
+            --text: #153c34;
         }
 
         body {
             margin: 0;
             min-height: 100vh;
             font-family: Arial, Helvetica, sans-serif;
-            background: var(--soft);
             color: var(--text);
+            background: #ffffff;
         }
 
         .page {
             min-height: 100vh;
-            display: grid;
-            grid-template-columns: 46% 54%;
-        }
-
-        /* LEFT IMAGE */
-        .image-side {
             position: relative;
-            background: url("{{ asset('assets/madanibag.png') }}") center/cover no-repeat;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
         }
 
-        .image-side::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background:
-                linear-gradient(
-                    135deg,
-                    rgba(17,67,56,0.88) 0%,
-                    rgba(17,67,56,0.48) 52%,
-                    rgba(251,176,60,0.28) 100%
-                );
-        }
+      
+     .page::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: url("{{ asset('assets/madanibag.png') }}") center/cover no-repeat;
+    filter: grayscale(25%) contrast(1.12);
+    opacity: 0.7;
+    z-index: 0;
+}
 
-        .brand {
+.page::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,0.42) 0%,
+            rgba(255,255,255,0.58) 50%,
+            rgba(255,255,255,0.72) 100%
+        );
+    z-index: 1;
+}
+        .topbar,
+        .main {
             position: relative;
             z-index: 2;
-            padding: 34px;
+        }
+
+        .topbar {
+            padding: 28px 42px;
             display: flex;
             align-items: center;
             gap: 12px;
-            color: white;
         }
 
-        .brand img {
+        .topbar img {
             width: 58px;
             height: auto;
             object-fit: contain;
         }
 
-        .brand strong {
+        .brand-text strong {
             display: block;
             font-size: 19px;
+            color: var(--green);
             line-height: 1.2;
         }
 
-        .brand span {
+        .brand-text span {
             font-size: 13px;
-            opacity: 0.9;
+            color: #63756f;
         }
 
-        .hero-text {
-            position: absolute;
-            z-index: 2;
-            left: 36px;
-            bottom: 46px;
-            color: white;
-            max-width: 420px;
+        .main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px 24px 60px;
         }
 
-        .hero-text small {
+        .content {
+            width: 100%;
+            max-width: 980px;
+            text-align: center;
+        }
+
+        .label {
             display: inline-block;
-            margin-bottom: 12px;
-            padding: 7px 12px;
-            border-radius: 4px;
-            background: var(--gold);
-            color: var(--green);
-            font-weight: 700;
+            margin-bottom: 14px;
+            color: var(--gold-dark);
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
 
-        .hero-text h1 {
+        h1 {
             margin: 0;
-            font-size: 42px;
-            line-height: 1.15;
+            font-size: 52px;
+            line-height: 1.1;
+            color: var(--green);
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: -1px;
         }
 
-        .hero-text h1 span {
+        h1 span {
             color: var(--gold);
         }
 
-        .hero-text p {
-            margin: 12px 0 0;
-            line-height: 1.6;
-            font-size: 15px;
-            opacity: 0.95;
-        }
-
-        /* RIGHT CONTENT */
-        .content-side {
-            padding: 34px 52px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background:
-                radial-gradient(circle at top right, rgba(251,176,60,0.18), transparent 32%),
-                linear-gradient(180deg, #ffffff, #f7f8f5);
-        }
-
-        .panel {
-            width: 100%;
+        .subtitle {
+            margin: 14px auto 42px;
             max-width: 620px;
-        }
-
-        .section-title {
-            margin-bottom: 22px;
-        }
-
-        .section-title small {
-            color: var(--gold-dark);
-            text-transform: uppercase;
-            font-weight: 700;
-            letter-spacing: 1px;
-            font-size: 13px;
-        }
-
-        .section-title h2 {
-            margin: 6px 0 6px;
-            font-size: 34px;
-            color: var(--green);
-        }
-
-        .section-title p {
-            margin: 0;
-            color: #66746f;
-            font-size: 15px;
+            font-size: 17px;
+            line-height: 1.6;
+            color: #657670;
         }
 
         .service-list {
+            width: 100%;
+            max-width: 760px;
+            margin: 0 auto;
             display: grid;
-            gap: 13px;
-            margin-bottom: 24px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
         }
 
         .btn {
             width: 100%;
-            height: 68px;
+            min-height: 86px;
             border: none;
-            border-radius: 8px;
+            border-radius: 4px;
             background: var(--gold);
             color: var(--green);
-            font-size: 17px;
-            font-weight: 700;
+            font-size: 18px;
+            font-weight: 800;
             cursor: pointer;
-            box-shadow: 0 5px 0 var(--gold-dark);
+            box-shadow: 0 7px 0 var(--gold-dark);
             transition: 0.12s ease;
+            text-transform: uppercase;
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            background: #ffc25a;
+            transform: translateY(-3px);
+            background: #ffc257;
+            box-shadow: 0 10px 0 var(--gold-dark);
         }
 
         .btn:active {
-            transform: translateY(3px);
-            box-shadow: 0 2px 0 var(--gold-dark);
+            transform: translateY(4px);
+            box-shadow: 0 3px 0 var(--gold-dark);
         }
 
         .btn:disabled {
@@ -194,78 +178,12 @@
             transform: none;
         }
 
-        /* OFFICER STATUS */
-        .status-box {
-            margin-top: 24px;
-            padding: 20px;
-            border-radius: 12px;
-            background: #ffffff;
-            border: 1px solid #e5ebe8;
-            box-shadow: 0 10px 28px rgba(17,67,56,0.08);
-        }
-
-        .status-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 14px;
-        }
-
-        .status-header h3 {
-            margin: 0;
-            font-size: 18px;
-            color: var(--green);
-        }
-
-        .status-header span {
-            font-size: 12px;
-            color: #66746f;
-        }
-
-        .officer-list {
-            display: grid;
-            gap: 10px;
-        }
-
-        .officer {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            align-items: center;
-            gap: 12px;
-            padding: 13px 14px;
-            border-radius: 8px;
-            background: #f4f7f5;
-            border-left: 5px solid var(--gold);
-        }
-
-        .officer-name {
-            font-weight: 700;
-            color: var(--green);
-            font-size: 15px;
-        }
-
-        .officer-info {
-            font-size: 13px;
-            color: #66746f;
-            margin-top: 3px;
-        }
-
-        .counter {
-            min-width: 46px;
-            height: 38px;
-            border-radius: 6px;
-            background: var(--green);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-        }
-
         .message {
-            margin-top: 18px;
-            padding: 13px;
-            border-radius: 8px;
+            width: 100%;
+            max-width: 760px;
+            margin: 22px auto 0;
+            padding: 14px;
+            border-radius: 4px;
             display: none;
             font-weight: bold;
             text-align: center;
@@ -274,45 +192,118 @@
         .success {
             background: #d9f4e3;
             color: #14532d;
+            border: 1px solid #bce8cd;
         }
 
         .error {
             background: #ffe1e1;
             color: #842020;
+            border: 1px solid #ffc4c4;
         }
 
         .back-home {
-            display: block;
-            margin-top: 16px;
-            padding: 14px;
-            text-align: center;
+            display: inline-block;
+            margin-top: 24px;
+            padding: 14px 34px;
+            border-radius: 4px;
+            color: white;
+            background: var(--green);
             text-decoration: none;
-            color: var(--green);
-            background: #edf2ef;
-            border-radius: 8px;
-            font-weight: 700;
+            font-weight: 800;
+            transition: 0.12s ease;
         }
 
         .back-home:hover {
-            background: var(--green);
-            color: white;
+            background: var(--gold);
+            color: var(--green);
         }
 
-        @media (max-width: 900px) {
-            .page {
+        .status-box {
+            width: 100%;
+            max-width: 900px;
+            margin: 42px auto 0;
+            padding-top: 26px;
+            border-top: 1px solid rgba(17,67,56,0.18);
+        }
+
+        .status-header {
+            margin-bottom: 18px;
+        }
+
+        .status-header h3 {
+            margin: 0;
+            color: var(--green);
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-header span {
+            display: block;
+            margin-top: 4px;
+            color: #6b7c76;
+            font-size: 14px;
+        }
+
+        .officer-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+
+        .officer {
+            background: rgba(255,255,255,0.78);
+            border: 1px solid rgba(17,67,56,0.12);
+            border-bottom: 4px solid var(--gold);
+            padding: 18px;
+            text-align: left;
+        }
+
+        .officer-name {
+            font-weight: 800;
+            color: var(--green);
+            font-size: 15px;
+        }
+
+        .officer-info {
+            margin-top: 4px;
+            color: #66746f;
+            font-size: 13px;
+        }
+
+        .counter {
+            margin-top: 14px;
+            font-size: 38px;
+            line-height: 1;
+            color: var(--gold);
+            font-weight: 900;
+        }
+
+        @media (max-width: 768px) {
+            .topbar {
+                padding: 22px;
+            }
+
+            h1 {
+                font-size: 34px;
+            }
+
+            .subtitle {
+                font-size: 15px;
+                margin-bottom: 28px;
+            }
+
+            .service-list {
                 grid-template-columns: 1fr;
             }
 
-            .image-side {
-                min-height: 360px;
+            .btn {
+                min-height: 68px;
+                font-size: 16px;
             }
 
-            .content-side {
-                padding: 28px 20px;
-            }
-
-            .hero-text h1 {
-                font-size: 32px;
+            .officer-list {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -321,30 +312,23 @@
 
 <div class="page">
 
-    <section class="image-side">
-        <div class="brand">
-            <img src="{{ asset('assets/Logo Pack-02.png') }}" alt="Logo">
-            <div>
-                <strong>Credit Union Madani</strong>
-                <span>Sistem antrean layanan</span>
-            </div>
+    <div class="topbar">
+        <img src="{{ asset('assets/Logo Pack-02.png') }}" alt="Logo">
+        <div class="brand-text">
+            <strong>Credit Union Madani</strong>
+            <span>Sistem antrean layanan</span>
         </div>
+    </div>
 
-        <div class="hero-text">
-            <small>LAYANAN DIGITAL</small>
+    <main class="main">
+        <div class="content">
+
+            <div class="label">Layanan Digital</div>
+
             <h1>Ambil Nomor <span>Antrean</span></h1>
-            <p>Pilih layanan yang Anda butuhkan. Sistem akan memproses nomor antrean secara otomatis.</p>
-        </div>
-    </section>
-
-    <main class="content-side">
-        <div class="panel">
-
-            <div class="section-title">
-                <small>Menu Layanan</small>
-                <h2>Pilih Layanan</h2>
-                <p>Silakan tekan salah satu tombol layanan di bawah ini.</p>
-            </div>
+            <p class="subtitle">
+                Silakan pilih layanan yang Anda butuhkan untuk mengambil nomor antrean.
+            </p>
 
             <div class="service-list">
                 @foreach($services as $service)
@@ -361,32 +345,14 @@
             <div class="status-box">
                 <div class="status-header">
                     <h3>Status Officer</h3>
-                    <span>Antrean diproses hari ini</span>
+                    <span>Jumlah antrean yang selesai diproses hari ini</span>
                 </div>
 
-                <div class="officer-list">
+                <div class="officer-list" id="officerStatus">
                     <div class="officer">
-                        <div>
-                            <div class="officer-name">Officer 1</div>
-                            <div class="officer-info">Teller / Tarik Setor</div>
-                        </div>
-                        <div class="counter">12</div>
-                    </div>
-
-                    <div class="officer">
-                        <div>
-                            <div class="officer-name">Officer 2</div>
-                            <div class="officer-info">Pengajuan Pinjaman</div>
-                        </div>
-                        <div class="counter">8</div>
-                    </div>
-
-                    <div class="officer">
-                        <div>
-                            <div class="officer-name">Officer 3</div>
-                            <div class="officer-info">Administrasi Anggota</div>
-                        </div>
-                        <div class="counter">15</div>
+                        <div class="officer-name">Memuat data...</div>
+                        <div class="officer-info">Mohon tunggu</div>
+                        <div class="counter">-</div>
                     </div>
                 </div>
             </div>
@@ -439,6 +405,49 @@ function ambil(serviceId, btnEl) {
         btnEl.innerHTML = oldText;
     });
 }
+
+function loadOfficerStatus() {
+    fetch('/queue-status')
+        .then(res => res.json())
+        .then(data => {
+            const wrapper = document.getElementById('officerStatus');
+            wrapper.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                wrapper.innerHTML = `
+                    <div class="officer">
+                        <div class="officer-name">Belum ada antrean selesai</div>
+                        <div class="officer-info">Data akan muncul setelah officer menyelesaikan antrean</div>
+                        <div class="counter">0</div>
+                    </div>
+                `;
+                return;
+            }
+
+            data.forEach(item => {
+                wrapper.innerHTML += `
+                    <div class="officer">
+                        <div class="officer-name">${item.officer_name ?? 'Officer'}</div>
+                        <div class="officer-info">${item.service_name ?? 'Layanan'}</div>
+                        <div class="counter">${item.total_done}</div>
+                    </div>
+                `;
+            });
+        })
+        .catch(() => {
+            const wrapper = document.getElementById('officerStatus');
+            wrapper.innerHTML = `
+                <div class="officer">
+                    <div class="officer-name">Gagal memuat data</div>
+                    <div class="officer-info">Periksa route /queue-status</div>
+                    <div class="counter">!</div>
+                </div>
+            `;
+        });
+}
+
+loadOfficerStatus();
+setInterval(loadOfficerStatus, 5000);
 </script>
 
 </body>

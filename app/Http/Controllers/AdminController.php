@@ -98,7 +98,8 @@ class AdminController extends Controller
             'title' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
-            'youtube' => ['nullable', 'string', 'max:255'],
+            'youtube' => ['nullable'],
+            'youtube.*' => ['nullable', 'string', 'max:255'],
             'logo' => ['nullable', 'image', 'max:2048'],
             'background' => ['nullable', 'image', 'max:4096'],
         ]);
@@ -108,7 +109,20 @@ class AdminController extends Controller
         $setting->title = $request->title;
         $setting->address = $request->address;
         $setting->phone = $request->phone;
-        $setting->youtube = $request->youtube;
+
+        $youtubeLinks = $request->youtube ?? [];
+
+        if (is_array($youtubeLinks)) {
+            $youtubeLinks = array_map('trim', $youtubeLinks);
+
+            $youtubeLinks = array_filter($youtubeLinks, function ($link) {
+                return $link !== '';
+            });
+
+            $setting->youtube = implode("\n", $youtubeLinks);
+        } else {
+            $setting->youtube = trim($youtubeLinks);
+        }
 
         if ($request->hasFile('logo')) {
             $setting->logo = $request->file('logo')->store('settings', 'public');

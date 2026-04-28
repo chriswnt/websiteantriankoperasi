@@ -68,7 +68,7 @@
             position: relative;
         }
 
-        .video iframe { 
+        #video-yt{
             position: absolute;
             top: 50%;
             left: 50%;
@@ -109,6 +109,7 @@
             background: rgba(0,0,0,0.5);
             padding: 5px 10px;
             border-radius: 5px;
+            z-index: 9999;
         }
     </style>
 </head>
@@ -116,14 +117,20 @@
 <body onclick="aktifkanAudio()">
 
 @php
-    $youtubeUrl = $setting->youtube ?? '';
+    $youtubeRaw = $setting->youtube ?? '';
+    $youtubeLinks = preg_split('/\r\n|\r|\n/', $youtubeRaw);
 
-    $youtubeParams = 'enablejsapi=1&autoplay=1&mute=1&loop=1&controls=0&modestbranding=1&rel=0&playsinline=1';
+    $youtubeVideoIds = [];
+    $youtubePlaylistId = null;
 
-    $youtubeEmbedUrl = 'https://www.youtube.com/embed/jmKRgqWGrWc?' . $youtubeParams . '&playlist=jmKRgqWGrWc';
+    foreach ($youtubeLinks as $youtubeUrl) {
+        $youtubeUrl = trim($youtubeUrl);
 
-    if (!empty($youtubeUrl)) {
-        $parsedUrl = parse_url(trim($youtubeUrl));
+        if (empty($youtubeUrl)) {
+            continue;
+        }
+
+        $parsedUrl = parse_url($youtubeUrl);
         $host = $parsedUrl['host'] ?? '';
         $path = $parsedUrl['path'] ?? '';
         $queryString = $parsedUrl['query'] ?? '';
@@ -131,7 +138,10 @@
         parse_str($queryString, $query);
 
         $videoId = null;
-        $playlistId = $query['list'] ?? null;
+
+        if (!empty($query['list']) && empty($youtubePlaylistId)) {
+            $youtubePlaylistId = $query['list'];
+        }
 
         if (str_contains($host, 'youtu.be')) {
             $videoId = trim($path, '/');
@@ -144,13 +154,24 @@
                 $segments = explode('/embed/', $path);
                 $videoId = $segments[1] ?? $videoId;
             }
+
+            if (str_contains($path, '/shorts/')) {
+                $segments = explode('/shorts/', $path);
+                $videoId = $segments[1] ?? $videoId;
+            }
         }
 
-        if (!empty($playlistId)) {
-            $youtubeEmbedUrl = 'https://www.youtube.com/embed/videoseries?list=' . $playlistId . '&' . $youtubeParams;
-        } elseif (!empty($videoId)) {
-            $youtubeEmbedUrl = 'https://www.youtube.com/embed/' . $videoId . '?' . $youtubeParams . '&playlist=' . $videoId;
+        if (!empty($videoId)) {
+            $videoId = explode('?', $videoId)[0];
+            $videoId = explode('&', $videoId)[0];
+            $youtubeVideoIds[] = $videoId;
         }
+    }
+
+    $youtubeVideoIds = array_values(array_unique($youtubeVideoIds));
+
+    if (empty($youtubeVideoIds) && empty($youtubePlaylistId)) {
+        $youtubeVideoIds = ['jmKRgqWGrWc'];
     }
 @endphp
 
@@ -180,11 +201,7 @@
 
     <div class="video">
         <div class="video-box">
-            <iframe id="video-yt" 
-                src="{{ $youtubeEmbedUrl }}"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen>
-            </iframe>
+            <div id="video-yt"></div>
         </div>
     </div>
 
@@ -212,9 +229,64 @@
 
 <script>
 var player;
+let currentVideoIndex = 0;
+
+const youtubePlaylistId = @json($youtubePlaylistId);
+const youtubeVideoIds = @json($youtubeVideoIds);
 
 function onYouTubeIframeAPIReady() {
-    player = new YT.Player('video-yt');
+    if (youtubePlaylistId) {
+        player = new YT.Player('video-yt', {
+            height: '100%',
+            width: '100%',
+            playerVars: {
+                listType: 'playlist',
+                list: youtubePlaylistId,
+                autoplay: 1,
+                mute: 1,
+                loop: 1,
+                controls: 0,
+                modestbranding: 1,
+                rel: 0,
+                playsinline: 1
+            },
+            events: {
+                'onReady': function(event) {
+                    event.target.playVideo();
+                }
+            }
+        });
+    } else {
+        player = new YT.Player('video-yt', {
+            height: '100%',
+            width: '100%',
+            videoId: youtubeVideoIds[currentVideoIndex],
+            playerVars: {
+                autoplay: 1,
+                mute: 1,
+                controls: 0,
+                modestbranding: 1,
+                rel: 0,
+                playsinline: 1
+            },
+            events: {
+                'onReady': function(event) {
+                    event.target.playVideo();
+                },
+                'onStateChange': function(event) {
+                    if (event.data === YT.PlayerState.ENDED) {
+                        currentVideoIndex++;
+
+                        if (currentVideoIndex >= youtubeVideoIds.length) {
+                            currentVideoIndex = 0;
+                        }
+
+                        player.loadVideoById(youtubeVideoIds[currentVideoIndex]);
+                    }
+                }
+            }
+        });
+    }
 }
 
 function updateClock(){
@@ -335,7 +407,12 @@ function loadQueue(withSound = false){
 
 function aktifkanAudio() {
     window.speechSynthesis.speak(new SpeechSynthesisUtterance(""));
-    if (player && typeof player.unMute === "function") player.unMute();
+
+    if (player && typeof player.unMute === "function") {
+        player.unMute();
+        player.setVolume(100);
+    }
+
     document.getElementById('status-text').innerHTML = "Status: ✅ Suara Aktif";
 }
 

@@ -16,13 +16,13 @@
             background:#f4f6f9;
         }
 
-        /* SIDEBAR */
+        /* ================= SIDEBAR KONSISTEN ================= */
         .sidebar{
-            width:220px;
+            width:180px;
             background:#114338;
             color:white;
             min-height:100vh;
-            padding:20px 16px;
+            padding:10px 12px;
             display:flex;
             flex-direction:column;
             flex-shrink:0;
@@ -30,57 +30,61 @@
 
         .sidebar h2{
             color:#FBB03C;
-            margin:10px 0 20px;
-            font-size:22px;
-            font-weight:bold;
+            margin:0 0 24px 2px;
+            font-size:20px;
+            font-weight:800;
         }
 
         .sidebar .menu{
             display:flex;
             flex-direction:column;
-            gap:8px;
+            gap:10px;
         }
 
         .sidebar a{
-            display:block;
+            display:flex;
+            align-items:center;
+            width:100%;
+            height:34px;
             color:white;
-            padding:12px 14px;
+            padding:0 12px;
             text-decoration:none;
-            border-radius:8px;
-            transition:0.2s ease-in-out;
-            font-weight:600;
+            border-radius:6px;
+            font-size:13px;
+            font-weight:700;
+            line-height:1;
+            transition:.2s ease-in-out;
         }
 
         .sidebar a:hover{
-            background:rgba(255,255,255,0.12);
+            background:rgba(255,255,255,.12);
         }
 
         .sidebar a.active{
-            background:rgba(255,255,255,0.14);
+            background:rgba(255,255,255,.16);
         }
 
         .logout-form{
-            margin-top:20px;
+            margin-top:35px;
         }
 
         .logout-btn{
-            margin-top:10px;
-            padding:12px;
-            background:#e74c3c;
+            width:100%;
+            height:32px;
+            background:#ef4438;
             color:white;
             border:none;
+            border-radius:6px;
+            font-size:11px;
+            font-weight:700;
             cursor:pointer;
-            border-radius:8px;
-            width:100%;
-            font-weight:600;
-            transition:0.2s ease-in-out;
         }
 
         .logout-btn:hover{
-            background:#cf3f31;
+            background:#d93b31;
         }
 
-        /* CONTENT */
+        /* ================= CONTENT ================= */
         .content{
             flex:1;
             background:#f4f6f9;
@@ -288,13 +292,20 @@
 </head>
 <body>
 
+    <!-- SIDEBAR -->
     <div class="sidebar">
         <h2>ADMIN</h2>
 
         <div class="menu">
             <a href="/admin" class="{{ request()->is('admin') ? 'active' : '' }}">Dashboard</a>
-            <a href="/admin/user" class="{{ request()->is('admin/user') ? 'active' : '' }}">Manajemen User</a>
-            <a href="/admin/setting" class="{{ request()->is('admin/setting') ? 'active' : '' }}">Kelola Tampilan</a>
+
+            <a href="/admin/user" class="{{ request()->is('admin/user*') ? 'active' : '' }}">
+                Manajemen User
+            </a>
+
+            <a href="/admin/setting" class="{{ request()->is('admin/setting*') ? 'active' : '' }}">
+                Kelola Tampilan
+            </a>
         </div>
 
         <form action="{{ route('logout') }}" method="POST" class="logout-form">
@@ -303,6 +314,7 @@
         </form>
     </div>
 
+    <!-- CONTENT -->
     <div class="content">
         <h1>Manajemen User</h1>
 
@@ -336,6 +348,7 @@
         @endif
 
         <div class="layout">
+            <!-- FORM -->
             <div class="card">
                 <h2>Tambah User Baru</h2>
 
@@ -343,13 +356,13 @@
                     @csrf
 
                     <label>Nama</label>
-                    <input type="text" name="name" placeholder="Masukkan nama" value="{{ old('name') }}">
+                    <input type="text" name="name" value="{{ old('name') }}">
 
                     <label>Email</label>
-                    <input type="email" name="email" placeholder="Masukkan email" value="{{ old('email') }}">
+                    <input type="email" name="email" value="{{ old('email') }}">
 
                     <label>Password</label>
-                    <input type="password" name="password" placeholder="Masukkan password">
+                    <input type="password" name="password">
 
                     <label>Role</label>
                     <select name="role" id="roleSelect">
@@ -374,6 +387,7 @@
                 </form>
             </div>
 
+            <!-- TABLE -->
             <div class="card">
                 <h2>Daftar User</h2>
 
