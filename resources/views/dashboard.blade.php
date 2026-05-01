@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>Dashboard Antrean Real-time</title>
-
+    <link rel="icon" type="image/png" href="{{ asset('assets/Logo Pack-02.png') }}">
     <style>
         body { 
             margin: 0; 
@@ -12,6 +12,20 @@
             color: white; 
             overflow: hidden; 
             cursor: pointer; 
+            @if(!empty($setting->background))
+                background-image: url("{{ asset('storage/' . $setting->background) }}");
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+            @endif
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 67, 56, 0.88);
+            z-index: -1;
         }
 
         .header { 
@@ -22,6 +36,28 @@
             justify-content: space-between; 
             align-items: center; 
             border-bottom: 4px solid #FBB03C; 
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .logo-instansi {
+            height: 70px;
+            width: auto;
+            max-width: 120px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .header h2 {
+            margin: 0 0 8px 0;
+        }
+
+        .header p {
+            margin: 0;
         }
 
         .container { 
@@ -52,34 +88,47 @@
             font-weight: bold; 
         }
 
-        .video { 
-            width: 50%;
-            display: flex;
+        .officer-name {
+            margin-top: 12px;
+            font-size: 24px;
+            font-weight: bold;
         }
 
-        .video-box{
-            width: 100%;
-            height: 100%;
-            border: 4px solid #FBB03C;
-            border-radius: 15px;
-            overflow: hidden;
-            box-sizing: border-box;
-            background: #000;
-            position: relative;
+        .loket-officer {
+            margin-top: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
         }
 
-        #video-yt{
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 160%;
-            height: 160%;
-            transform: translate(-50%, -50%);
-            border: none;
-            pointer-events: none;
-            display: block;
-        }
+       .video { 
+    width: 50%;
+    display: flex;
+}
 
+.video-box{
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 4px solid #FBB03C;
+    border-radius: 15px;
+    overflow: hidden;
+    box-sizing: border-box;
+    background: #000;
+    position: relative;
+    align-self: center;
+}
+
+#video-yt{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform: none;
+    border: none;
+    pointer-events: none;
+    display: block;
+}
         .loket-container { 
             display: flex; 
             gap: 20px; 
@@ -180,9 +229,15 @@
 </div>
 
 <div class="header">
-    <div>
-        <h2>{{ $setting->title ?? 'NAMA INSTANSI' }}</h2>
-        <p>{{ $setting->address ?? '-' }}</p>
+    <div class="header-left">
+        @if(!empty($setting->logo))
+            <img src="{{ asset('storage/' . $setting->logo) }}" class="logo-instansi" alt="Logo">
+        @endif
+
+        <div>
+            <h2>{{ $setting->title ?? 'NAMA INSTANSI' }}</h2>
+            <p>{{ $setting->address ?? '-' }}</p>
+        </div>
     </div>
 
     <div style="text-align: right;">
@@ -197,6 +252,7 @@
         <h2>ANTREAN DIPANGGIL</h2>
         <div class="queue-number" id="main-number">000</div>
         <div class="layanan" id="layanan-txt">-</div>
+        <div class="officer-name" id="officer-main">-</div>
     </div>
 
     <div class="video">
@@ -211,16 +267,19 @@
     <div class="loket-box">
         <h3>TELLER</h3>
         <div class="nomor" id="teller">-</div>
+        <div class="loket-officer" id="teller-officer">-</div>
     </div>
 
     <div class="loket-box">
         <h3>ADMINISTRASI</h3>
         <div class="nomor" id="administrasi">-</div>
+        <div class="loket-officer" id="administrasi-officer">-</div>
     </div>
 
     <div class="loket-box">
         <h3>PINJAMAN</h3>
         <div class="nomor" id="pinjaman">-</div>
+        <div class="loket-officer" id="pinjaman-officer">-</div>
     </div>
 </div>
 
@@ -288,7 +347,6 @@ function onYouTubeIframeAPIReady() {
         });
     }
 }
-
 function updateClock(){
     const now = new Date();
     document.getElementById("jam").innerHTML = now.toLocaleTimeString('id-ID');
@@ -388,10 +446,15 @@ function loadQueue(withSound = false){
 
         document.getElementById('main-number').innerText = mainNum;
         document.getElementById('layanan-txt').innerText = mainSvc;
+        document.getElementById('officer-main').innerText = data.main_officer || '-';
 
         document.getElementById('teller').innerText = data.teller || '000';
         document.getElementById('administrasi').innerText = data.administrasi || '000';
         document.getElementById('pinjaman').innerText = data.pinjaman || '000';
+
+        document.getElementById('teller-officer').innerText = data.teller_officer || '-';
+        document.getElementById('administrasi-officer').innerText = data.administrasi_officer || '-';
+        document.getElementById('pinjaman-officer').innerText = data.pinjaman_officer || '-';
 
         if(withSound && mainNum !== '000') {
             if (mainNum !== previousMainNumber) {
@@ -414,7 +477,12 @@ function aktifkanAudio() {
     }
 
     document.getElementById('status-text').innerHTML = "Status: ✅ Suara Aktif";
+   
 }
+    document.addEventListener("keydown", aktifkanAudio, { once: true });
+    document.addEventListener("keydown", aktifkanAudio, { once: true });
+    document.addEventListener("click", aktifkanAudio, { once: true });
+    document.addEventListener("touchstart", aktifkanAudio, { once: true });
 
 function autoRefreshAtMidnight() {
     let now = new Date();

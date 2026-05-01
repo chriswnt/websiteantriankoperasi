@@ -5,7 +5,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Officer Panel - Sistem Antrean</title>
-
+    <link rel="icon" type="image/png" href="{{ asset('assets/Logo Pack-02.png') }}">
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -503,11 +503,15 @@ function renderTable(data) {
         let aksiHtml = '';
         if (q.status === 'waiting') {
             aksiHtml = `<button class="btn btn-call" onclick="callQueue(${q.id}, this)">Panggil</button>`;
-        } else if (q.status === 'called') {
-            aksiHtml = `<button class="btn btn-done" onclick="doneQueue(${q.id}, this)">Selesai</button>`;
-        } else {
-            aksiHtml = `<span style="color:#2ecc71; font-weight:bold;">✔ Selesai</span>`;
-        }
+   
+        }  else if (q.status === 'called') {
+
+    if (q.officer_id === {{ auth()->id() }}) {
+        aksiHtml = `<button class="btn btn-done" onclick="doneQueue(${q.id}, this)">Selesai</button>`;
+    } else {
+        aksiHtml = `<span style="color:#e74c3c; font-weight:bold;">Diproses officer lain</span>`;
+    }
+}
 
         // FIX: Langsung gunakan waktu yang sudah dikembalikan dan disamakan oleh Controller
         html += `

@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Kelola Tampilan</title>
-
+    <link rel="icon" type="image/png" href="{{ asset('assets/Logo Pack-02.png') }}">
     <style>
         *{
             box-sizing:border-box;
@@ -17,7 +17,6 @@
             color:#1f2937;
         }
 
-        /* ================= SIDEBAR KONSISTEN ================= */
         .sidebar{
             width:180px;
             background:#114338;
@@ -85,7 +84,6 @@
             background:#d93b31;
         }
 
-        /* CONTENT */
         .content{
             flex:1;
             padding:32px;
@@ -106,7 +104,6 @@
             align-items:start;
         }
 
-        /* CARD */
         .card{
             background:white;
             padding:26px;
@@ -115,7 +112,6 @@
             border:1px solid #e5e7eb;
         }
 
-        /* FORM */
         label{
             display:block;
             margin-bottom:7px;
@@ -145,6 +141,61 @@
             padding:10px;
             background:#f9fafb;
             cursor:pointer;
+        }
+
+        .logo-history,
+        .bg-history{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            margin-bottom:12px;
+            border:1px solid #e5e7eb;
+            background:#f9fafb;
+            padding:10px;
+            border-radius:10px;
+        }
+
+        .logo-history img{
+            height:55px;
+            width:55px;
+            object-fit:contain;
+            border:1px solid #d1d5db;
+            border-radius:8px;
+            padding:4px;
+            background:white;
+            flex-shrink:0;
+        }
+
+        .bg-history img{
+            width:120px;
+            height:70px;
+            object-fit:cover;
+            border-radius:8px;
+            border:1px solid #d1d5db;
+            background:white;
+            flex-shrink:0;
+        }
+
+        .logo-info,
+        .bg-info{
+            display:flex;
+            flex-direction:column;
+            min-width:0;
+        }
+
+        .logo-name,
+        .bg-name{
+            font-size:12px;
+            font-weight:800;
+            color:#114338;
+            word-break:break-all;
+        }
+
+        .logo-note,
+        .bg-note{
+            font-size:11px;
+            color:#6b7280;
+            margin-top:3px;
         }
 
         .yt-item{
@@ -197,7 +248,6 @@
             line-height:1.5;
         }
 
-        /* BUTTON FORM */
         .save-btn{
             width:100%;
             padding:13px;
@@ -217,7 +267,6 @@
             transform:translateY(-1px);
         }
 
-        /* PREVIEW */
         .preview-card{
             background:white;
             padding:18px;
@@ -245,6 +294,23 @@
             flex-direction:column;
             align-items:center;
             justify-content:center;
+            background-size:cover;
+            background-position:center;
+            background-repeat:no-repeat;
+
+            @if(!empty($setting->background))
+                background-image:
+                    linear-gradient(rgba(17,67,56,.85), rgba(17,67,56,.85)),
+                    url("{{ asset('storage/' . $setting->background) }}");
+            @endif
+        }
+
+        .preview-logo{
+            height:70px;
+            width:auto;
+            max-width:120px;
+            object-fit:contain;
+            margin-bottom:12px;
         }
 
         .preview h2{
@@ -321,7 +387,6 @@
 
 <body>
 
-    <!-- SIDEBAR -->
     <div class="sidebar">
         <h2>ADMIN</h2>
 
@@ -343,7 +408,6 @@
         </form>
     </div>
 
-    <!-- CONTENT -->
     <div class="content">
 
         <h2>⚙️ Kelola Tampilan</h2>
@@ -405,7 +469,6 @@
 
         <div class="setting-layout">
 
-            <!-- FORM -->
             <div class="card">
                 <form action="/admin/setting/update" method="POST" enctype="multipart/form-data">
                     @csrf
@@ -445,20 +508,45 @@
                     </div>
 
                     <label>Logo</label>
+
+                    @if(!empty($setting->logo))
+                        <div class="logo-history">
+                            <img src="{{ asset('storage/' . $setting->logo) }}" alt="Logo">
+                            <div class="logo-info">
+                                <div class="logo-name">{{ basename($setting->logo) }}</div>
+                                <div class="logo-note">Logo saat ini</div>
+                            </div>
+                        </div>
+                    @endif
+
                     <input type="file" name="logo">
 
                     <label>Background</label>
+
+                    @if(!empty($setting->background))
+                        <div class="bg-history">
+                            <img src="{{ asset('storage/' . $setting->background) }}" alt="Background">
+                            <div class="bg-info">
+                                <div class="bg-name">{{ basename($setting->background) }}</div>
+                                <div class="bg-note">Background saat ini</div>
+                            </div>
+                        </div>
+                    @endif
+
                     <input type="file" name="background">
 
                     <button type="submit" class="save-btn">💾 Simpan Tampilan</button>
                 </form>
             </div>
 
-            <!-- PREVIEW DASHBOARD -->
             <div class="preview-card">
                 <p class="preview-title">Preview Tampilan Antrean</p>
 
                 <div class="preview">
+                    @if(!empty($setting->logo))
+                        <img src="{{ asset('storage/' . $setting->logo) }}" class="preview-logo" alt="Logo">
+                    @endif
+
                     <h2>{{ $setting->title ?? 'NAMA INSTANSI' }}</h2>
                     <p>{{ $setting->address ?? '-' }}</p>
                     <p>{{ $setting->phone ?? '-' }}</p>

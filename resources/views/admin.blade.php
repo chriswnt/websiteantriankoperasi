@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Dashboard Admin</title>
-
+    <link rel="icon" type="image/png" href="{{ asset('assets/Logo Pack-02.png') }}">
     <style>
         *{
             box-sizing:border-box;

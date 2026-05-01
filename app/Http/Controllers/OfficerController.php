@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Http\Controllers;
 
@@ -90,6 +90,11 @@ class OfficerController extends Controller
             $queue->status = 'called';
             $queue->called_at = now();
             $queue->done_at = null;
+
+            // KUNCI ANTREAN KE OFFICER YANG MEMANGGIL
+            $queue->officer_id = Auth::id();
+            $queue->officer_name = Auth::user()->name;
+
             $queue->save();
         }
 
@@ -114,7 +119,21 @@ class OfficerController extends Controller
             ->where('id', $id)
             ->first();
 
-        if ($queue && $queue->status !== 'done') {
+        if (!$queue) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Antrean tidak ditemukan.'
+            ], 404);
+        }
+
+        if ((int) $queue->officer_id !== (int) Auth::id()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak berhak menyelesaikan antrean ini.'
+            ], 403);
+        }
+
+        if ($queue->status !== 'done') {
             $queue->status = 'done';
             $queue->done_at = now();
             $queue->save();

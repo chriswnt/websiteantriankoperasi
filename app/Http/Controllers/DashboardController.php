@@ -13,10 +13,16 @@ class DashboardController extends Controller
 
         $todayQuery = Queue::whereDate('created_at', today());
 
-        $queue = (clone $todayQuery)
-            ->where('status', 'called')
-            ->latest('called_at')
+        $latestAction = (clone $todayQuery)
+            ->whereIn('status', ['called', 'done'])
+            ->latest('updated_at')
             ->first();
+
+        $queue = null;
+
+        if ($latestAction && $latestAction->status === 'called') {
+            $queue = $latestAction;
+        }
 
         $teller = (clone $todayQuery)
             ->where('service_id', 1)
@@ -46,8 +52,13 @@ class DashboardController extends Controller
             });
 
             $youtubeLinks = array_map('trim', $youtubeLinks);
-
             $youtubeLinks = array_values($youtubeLinks);
+        }
+
+        $firstYoutube = null;
+
+        if (!empty($youtubeLinks)) {
+            $firstYoutube = $youtubeLinks[0];
         }
 
         return view('dashboard', compact(
@@ -56,7 +67,8 @@ class DashboardController extends Controller
             'teller',
             'administrasi',
             'pinjaman',
-            'youtubeLinks'
+            'youtubeLinks',
+            'firstYoutube'
         ));
     }
 
@@ -65,10 +77,16 @@ class DashboardController extends Controller
         $todayQuery = Queue::with('service')
             ->whereDate('created_at', today());
 
-        $main = (clone $todayQuery)
-            ->where('status', 'called')
-            ->latest('called_at')
+        $latestAction = (clone $todayQuery)
+            ->whereIn('status', ['called', 'done'])
+            ->latest('updated_at')
             ->first();
+
+        $main = null;
+
+        if ($latestAction && $latestAction->status === 'called') {
+            $main = $latestAction;
+        }
 
         $teller = (clone $todayQuery)
             ->where('service_id', 1)
@@ -91,11 +109,19 @@ class DashboardController extends Controller
         return response()->json([
             'main_number'  => $main ? ($main->queue_number ?? $main->id) : '000',
             'main_service' => $main ? ($main->service->name ?? '-') : '-',
-            'teller'       => $teller ? ($teller->queue_number ?? $teller->id) : '000',
+            'main_officer' => $main ? ($main->officer_name ?? '-') : '-',
+
+            'teller' => $teller ? ($teller->queue_number ?? $teller->id) : '000',
+            'teller_officer' => $teller ? ($teller->officer_name ?? '-') : '-',
+
             'administrasi' => $administrasi ? ($administrasi->queue_number ?? $administrasi->id) : '000',
-            'pinjaman'     => $pinjaman ? ($pinjaman->queue_number ?? $pinjaman->id) : '000',
-        ])->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-          ->header('Pragma', 'no-cache')
-          ->header('Expires', 'Sat, 01 Jan 2000 00:00:00 GMT');
+            'administrasi_officer' => $administrasi ? ($administrasi->officer_name ?? '-') : '-',
+
+            'pinjaman' => $pinjaman ? ($pinjaman->queue_number ?? $pinjaman->id) : '000',
+            'pinjaman_officer' => $pinjaman ? ($pinjaman->officer_name ?? '-') : '-',
+        ])
+        ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        ->header('Pragma', 'no-cache')
+        ->header('Expires', 'Sat, 01 Jan 2000 00:00:00 GMT');
     }
 }
