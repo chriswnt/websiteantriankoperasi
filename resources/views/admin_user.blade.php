@@ -358,6 +358,9 @@
                     <label>Nama</label>
                     <input type="text" name="name" value="{{ old('name') }}">
 
+                    <label>Username</label>
+                    <input type="text" name="username" value="{{ old('username') }}">
+
                     <label>Email</label>
                     <input type="email" name="email" value="{{ old('email') }}">
 
@@ -396,6 +399,7 @@
                         <thead>
                             <tr>
                                 <th>NAMA</th>
+                                <th>USERNAME</th>
                                 <th>EMAIL</th>
                                 <th>ROLE</th>
                                 <th>LAYANAN</th>
@@ -406,6 +410,7 @@
                             @forelse($users as $user)
                                 <tr>
                                     <td>{{ $user->name }}</td>
+                                    <td>{{ $user->username }}</td>
                                     <td>{{ $user->email }}</td>
                                     <td>
                                         @if($user->role === 'admin')
@@ -431,7 +436,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" style="text-align:center; color:#777;">Belum ada data user.</td>
+                                    <td colspan="6" style="text-align:center; color:#777;">Belum ada data user.</td>
                                 </tr>
                             @endforelse
                         </tbody>

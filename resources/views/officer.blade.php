@@ -419,8 +419,13 @@
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 
 <script>
-let allQueues = [];
+    if ("Notification" in window) {
+    Notification.requestPermission();
+}
 
+let allQueues = [];
+let lastSeenQueueId = 0;
+let firstLoadOfficer = true;
 /* dropdown user */
 function toggleUserMenu() {
     const menu = document.getElementById('userDropdownMenu');
@@ -461,11 +466,41 @@ function loadOfficer() {
             return;
         }
 
-        document.getElementById('total').innerText = data.total ?? 0;
-        document.getElementById('remaining').innerText = data.remaining ?? 0;
-        document.getElementById('current').innerText = data.current ? (data.current.queue_number || data.current.id) : '-';
-        document.getElementById('next').innerText = data.next ? (data.next.queue_number || data.next.id) : '-';
+const totalQueue = data.total ?? 0;
+const queues = data.queues || [];
 
+let newestQueueId = 0;
+
+queues.forEach(q => {
+    if (q.id > newestQueueId) {
+        newestQueueId = q.id;
+    }
+});
+
+if (firstLoadOfficer) {
+    lastSeenQueueId = newestQueueId;
+    firstLoadOfficer = false;
+} else {
+    const newQueues = queues.filter(q => q.id > lastSeenQueueId && q.status === 'waiting');
+
+    if (newQueues.length > 0) {
+        if ("Notification" in window && Notification.permission === "granted") {
+            new Notification("🔔 Antrean Baru!", {
+                body: `${newQueues.length} antrean baru masuk`,
+                icon: "/logo.png",
+                tag: "antrean-baru-" + Date.now(),
+                renotify: false
+            });
+        }
+
+        lastSeenQueueId = newestQueueId;
+    }
+}
+
+document.getElementById('total').innerText = totalQueue;
+document.getElementById('remaining').innerText = data.remaining ?? 0;
+document.getElementById('current').innerText = data.current ? (data.current.queue_number || data.current.id) : '-';
+document.getElementById('next').innerText = data.next ? (data.next.queue_number || data.next.id) : '-';
         allQueues = data.queues || [];
         renderTable(allQueues);
     })

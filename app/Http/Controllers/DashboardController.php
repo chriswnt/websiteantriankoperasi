@@ -13,15 +13,24 @@ class DashboardController extends Controller
 
         $todayQuery = Queue::whereDate('created_at', today());
 
-        $latestAction = (clone $todayQuery)
-            ->whereIn('status', ['called', 'done'])
-            ->latest('updated_at')
+        $latestCalled = (clone $todayQuery)
+            ->where('status', 'called')
+            ->whereNotNull('called_at')
+            ->latest('called_at')
+            ->first();
+
+        $latestDone = (clone $todayQuery)
+            ->where('status', 'done')
+            ->whereNotNull('done_at')
+            ->latest('done_at')
             ->first();
 
         $queue = null;
 
-        if ($latestAction && $latestAction->status === 'called') {
-            $queue = $latestAction;
+        if ($latestCalled) {
+            if (!$latestDone || $latestCalled->called_at >= $latestDone->done_at) {
+                $queue = $latestCalled;
+            }
         }
 
         $teller = (clone $todayQuery)
@@ -77,15 +86,24 @@ class DashboardController extends Controller
         $todayQuery = Queue::with('service')
             ->whereDate('created_at', today());
 
-        $latestAction = (clone $todayQuery)
-            ->whereIn('status', ['called', 'done'])
-            ->latest('updated_at')
+        $latestCalled = (clone $todayQuery)
+            ->where('status', 'called')
+            ->whereNotNull('called_at')
+            ->latest('called_at')
+            ->first();
+
+        $latestDone = (clone $todayQuery)
+            ->where('status', 'done')
+            ->whereNotNull('done_at')
+            ->latest('done_at')
             ->first();
 
         $main = null;
 
-        if ($latestAction && $latestAction->status === 'called') {
-            $main = $latestAction;
+        if ($latestCalled) {
+            if (!$latestDone || $latestCalled->called_at >= $latestDone->done_at) {
+                $main = $latestCalled;
+            }
         }
 
         $teller = (clone $todayQuery)
