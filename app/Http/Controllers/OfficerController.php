@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Queue;
 use App\Events\AntreanUpdate;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class OfficerController extends Controller
 {
@@ -28,6 +29,7 @@ class OfficerController extends Controller
                 'queues' => [],
                 'total' => 0,
                 'current' => null,
+                'currents' => [],
                 'next' => null,
                 'remaining' => 0,
                 'message' => 'Service user belum diatur.'
@@ -38,27 +40,48 @@ class OfficerController extends Controller
             ->where('service_id', $serviceId)
             ->whereDate('created_at', today());
 
-        $queues = (clone $query)->orderBy('id', 'desc')->get()->map(function ($queue) {
-            $queue->waktu_antri = $queue->created_at ? \Carbon\Carbon::parse($queue->created_at)->timezone('Asia/Jakarta')->format('H:i:s') : '-';
-            $queue->waktu_diproses = $queue->called_at ? \Carbon\Carbon::parse($queue->called_at)->timezone('Asia/Jakarta')->format('H:i:s') : '-';
-            $queue->waktu_selesai = $queue->done_at ? \Carbon\Carbon::parse($queue->done_at)->timezone('Asia/Jakarta')->format('H:i:s') : '-';
-            return $queue;
-        });
+        $queues = (clone $query)
+            ->orderBy('id', 'desc')
+            ->get()
+            ->map(function ($queue) {
+                $queue->waktu_antri = $queue->created_at
+                    ? Carbon::parse($queue->created_at)->timezone('Asia/Jakarta')->format('H:i:s')
+                    : '-';
+
+                $queue->waktu_diproses = $queue->called_at
+                    ? Carbon::parse($queue->called_at)->timezone('Asia/Jakarta')->format('H:i:s')
+                    : '-';
+
+                $queue->waktu_selesai = $queue->done_at
+                    ? Carbon::parse($queue->done_at)->timezone('Asia/Jakarta')->format('H:i:s')
+                    : '-';
+
+                return $queue;
+            });
+
+        $current = (clone $query)
+            ->where('status', 'called')
+            ->where('officer_id', Auth::id())
+            ->latest('called_at')
+            ->first();
+
+        $currents = (clone $query)
+            ->where('status', 'called')
+            ->orderBy('called_at', 'asc')
+            ->get();
+
+        $next = (clone $query)
+            ->where('status', 'waiting')
+            ->orderBy('id', 'asc')
+            ->first();
 
         return response()->json([
             'queues' => $queues,
             'total' => (clone $query)->count(),
-            'current' => (clone $query)
-                ->where('status', 'called')
-                ->latest('called_at')
-                ->first(),
-            'next' => (clone $query)
-                ->where('status', 'waiting')
-                ->orderBy('id', 'asc')
-                ->first(),
-            'remaining' => (clone $query)
-                ->where('status', 'waiting')
-                ->count(),
+            'current' => $current,
+            'currents' => $currents,
+            'next' => $next,
+            'remaining' => (clone $query)->where('status', 'waiting')->count(),
         ]);
     }
 
@@ -73,34 +96,99 @@ class OfficerController extends Controller
             ], 403);
         }
 
-        Queue::whereDate('created_at', today())
-            ->where('service_id', $serviceId)
-            ->where('status', 'called')
-            ->update([
-                'status' => 'done',
-                'done_at' => now()
-            ]);
+        try {
+            $result = DB::transaction(function () use ($id, $serviceId) {
+                $activeQueue = Queue::whereDate('created_at', today())
+                    ->where('officer_id', Auth::id())
+                    ->where('status', 'called')
+                    ->lockForUpdate()
+                    ->first();
 
-        $queue = Queue::whereDate('created_at', today())
-            ->where('service_id', $serviceId)
-            ->where('id', $id)
-            ->first();
+                if ($activeQueue && (int) $activeQueue->id === (int) $id) {
+                    return [
+                        'success' => true,
+                        'message' => 'Antrean sudah dipanggil.'
+                    ];
+                }
 
-        if ($queue && $queue->status === 'waiting') {
-            $queue->status = 'called';
-            $queue->called_at = now();
-            $queue->done_at = null;
+                if ($activeQueue) {
+                    return [
+                        'success' => false,
+                        'message' => 'Selesaikan antrean ' . ($activeQueue->queue_number ?? $activeQueue->id) . ' terlebih dahulu.',
+                        'code' => 422
+                    ];
+                }
 
-            // KUNCI ANTREAN KE OFFICER YANG MEMANGGIL
-            $queue->officer_id = Auth::id();
-            $queue->officer_name = Auth::user()->name;
+                $queue = Queue::whereDate('created_at', today())
+                    ->where('service_id', $serviceId)
+                    ->where('id', $id)
+                    ->lockForUpdate()
+                    ->first();
 
-            $queue->save();
+                if (!$queue) {
+                    return [
+                        'success' => false,
+                        'message' => 'Antrean tidak ditemukan.',
+                        'code' => 404
+                    ];
+                }
+
+                if ($queue->status === 'called' && (int) $queue->officer_id === (int) Auth::id()) {
+                    return [
+                        'success' => true,
+                        'message' => 'Antrean sudah dipanggil.'
+                    ];
+                }
+
+                if ($queue->status === 'called') {
+                    return [
+                        'success' => false,
+                        'message' => 'Antrean sudah dipanggil officer lain.',
+                        'code' => 422
+                    ];
+                }
+
+                if ($queue->status !== 'waiting') {
+                    return [
+                        'success' => false,
+                        'message' => 'Antrean ini sudah tidak bisa dipanggil.',
+                        'code' => 422
+                    ];
+                }
+
+                $queue->status = 'called';
+                $queue->called_at = now();
+                $queue->done_at = null;
+                $queue->officer_id = Auth::id();
+                $queue->officer_name = Auth::user()->name;
+                $queue->save();
+
+                return [
+                    'success' => true,
+                    'message' => 'Antrean berhasil dipanggil.'
+                ];
+            });
+
+            if ($result['success']) {
+                broadcast(new AntreanUpdate());
+
+                return response()->json([
+                    'success' => true,
+                    'message' => $result['message']
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => $result['message']
+            ], $result['code'] ?? 422);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
         }
-
-        broadcast(new AntreanUpdate());
-
-        return response()->json(['success' => true]);
     }
 
     public function done($id)
@@ -117,31 +205,27 @@ class OfficerController extends Controller
         $queue = Queue::whereDate('created_at', today())
             ->where('service_id', $serviceId)
             ->where('id', $id)
+            ->where('officer_id', Auth::id())
+            ->where('status', 'called')
             ->first();
 
         if (!$queue) {
             return response()->json([
                 'success' => false,
-                'message' => 'Antrean tidak ditemukan.'
+                'message' => 'Antrean tidak ditemukan, sudah selesai, atau bukan milik officer ini.'
             ], 404);
         }
 
-        if ((int) $queue->officer_id !== (int) Auth::id()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anda tidak berhak menyelesaikan antrean ini.'
-            ], 403);
-        }
-
-        if ($queue->status !== 'done') {
-            $queue->status = 'done';
-            $queue->done_at = now();
-            $queue->save();
-        }
+        $queue->status = 'done';
+        $queue->done_at = now();
+        $queue->save();
 
         broadcast(new AntreanUpdate());
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Antrean berhasil diselesaikan.'
+        ]);
     }
 
     public function reset()

@@ -101,34 +101,35 @@
             color: white;
         }
 
-       .video { 
-    width: 50%;
-    display: flex;
-}
+        .video { 
+            width: 50%;
+            display: flex;
+        }
 
-.video-box{
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    border: 4px solid #FBB03C;
-    border-radius: 15px;
-    overflow: hidden;
-    box-sizing: border-box;
-    background: #000;
-    position: relative;
-    align-self: center;
-}
+        .video-box{
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border: 4px solid #FBB03C;
+            border-radius: 15px;
+            overflow: hidden;
+            box-sizing: border-box;
+            background: #000;
+            position: relative;
+            align-self: center;
+        }
 
-#video-yt{
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    transform: none;
-    border: none;
-    pointer-events: none;
-    display: block;
-}
+        #video-yt{
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: none;
+            border: none;
+            pointer-events: none;
+            display: block;
+        }
+
         .loket-container { 
             display: flex; 
             gap: 20px; 
@@ -247,7 +248,6 @@
 </div>
 
 <div class="container">
-
     <div class="main-queue">
         <h2>ANTREAN DIPANGGIL</h2>
         <div class="queue-number" id="main-number">000</div>
@@ -260,7 +260,6 @@
             <div id="video-yt"></div>
         </div>
     </div>
-
 </div>
 
 <div class="loket-container">
@@ -347,11 +346,17 @@ function onYouTubeIframeAPIReady() {
         });
     }
 }
-function updateClock(){
+
+function updateClock() {
     const now = new Date();
+
     document.getElementById("jam").innerHTML = now.toLocaleTimeString('id-ID');
+
     document.getElementById("tanggal").innerHTML = now.toLocaleDateString('id-ID', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
     });
 }
 
@@ -360,7 +365,9 @@ updateClock();
 
 let speechQueue = [];
 let isSpeaking = false;
-let previousMainNumber = null;
+let spokenCalledKeys = JSON.parse(localStorage.getItem('spoken_called_keys') || '[]');
+let isLoadingQueue = false;
+let lastLoadAt = 0;
 
 function formatNomorAntrean(nomor) {
     nomor = String(nomor || '').trim();
@@ -390,15 +397,26 @@ function formatLayanan(layanan) {
 }
 
 function panggilSuara(nomor, layanan) {
+    if (!nomor || nomor === '000') {
+        return;
+    }
+
     if (isSpeaking) {
-        speechQueue.push({nomor, layanan});
+        const sudahAda = speechQueue.some(item => item.nomor === nomor);
+
+        if (!sudahAda) {
+            speechQueue.push({ nomor, layanan });
+        }
+
         return;
     }
 
     isSpeaking = true;
     window.speechSynthesis.cancel();
 
-    if (player && typeof player.setVolume === "function") player.setVolume(10);
+    if (player && typeof player.setVolume === "function") {
+        player.setVolume(10);
+    }
 
     setTimeout(() => {
         const synth = window.speechSynthesis;
@@ -406,7 +424,9 @@ function panggilSuara(nomor, layanan) {
         const nomorDibaca = formatNomorAntrean(nomor);
         const layananDibaca = formatLayanan(layanan);
 
-        const msg = new SpeechSynthesisUtterance(`Nomor Antrean, ${nomorDibaca}. Silakan menuju ${layananDibaca}.`);
+        const msg = new SpeechSynthesisUtterance(
+            `Nomor Antrean, ${nomorDibaca}. Silakan menuju ${layananDibaca}.`
+        );
 
         msg.lang = 'id-ID';
         msg.rate = 0.8;
@@ -415,7 +435,10 @@ function panggilSuara(nomor, layanan) {
 
         msg.onend = function() {
             setTimeout(() => {
-                if (player && typeof player.setVolume === "function") player.setVolume(100);
+                if (player && typeof player.setVolume === "function") {
+                    player.setVolume(100);
+                }
+
                 isSpeaking = false;
 
                 if (speechQueue.length > 0) {
@@ -425,11 +448,32 @@ function panggilSuara(nomor, layanan) {
             }, 1000);
         };
 
+        msg.onerror = function() {
+            if (player && typeof player.setVolume === "function") {
+                player.setVolume(100);
+            }
+
+            isSpeaking = false;
+        };
+
         synth.speak(msg);
     }, 500);
 }
 
-function loadQueue(withSound = false){
+function loadQueue(withSound = false) {
+    const now = Date.now();
+
+    if (isLoadingQueue) {
+        return;
+    }
+
+    if (withSound && now - lastLoadAt < 500) {
+        return;
+    }
+
+    isLoadingQueue = true;
+    lastLoadAt = now;
+
     fetch('/dashboard/data?time=' + new Date().getTime(), {
         method: 'GET',
         cache: 'no-store',
@@ -437,12 +481,16 @@ function loadQueue(withSound = false){
             'Accept': 'application/json',
             'X-Requested-With': 'XMLHttpRequest'
         }
-    }) 
+    })
     .then(res => res.json())
     .then(data => {
+        let mainNum = data.main_number && data.main_number !== '-'
+            ? String(data.main_number)
+            : '000';
 
-        let mainNum = data.main_number && data.main_number !== '-' ? data.main_number : '000';
-        let mainSvc = data.main_service && data.main_service !== '-' ? data.main_service.toUpperCase() : '-';
+        let mainSvc = data.main_service && data.main_service !== '-'
+            ? String(data.main_service).toUpperCase()
+            : '-';
 
         document.getElementById('main-number').innerText = mainNum;
         document.getElementById('layanan-txt').innerText = mainSvc;
@@ -456,15 +504,28 @@ function loadQueue(withSound = false){
         document.getElementById('administrasi-officer').innerText = data.administrasi_officer || '-';
         document.getElementById('pinjaman-officer').innerText = data.pinjaman_officer || '-';
 
-        if(withSound && mainNum !== '000') {
-            if (mainNum !== previousMainNumber) {
+        let calledAt = data.main_called_at || '';
+        let calledKey = mainNum + '|' + calledAt;
+
+        if (withSound && mainNum !== '000' && calledAt !== '') {
+            if (!spokenCalledKeys.includes(calledKey)) {
+                spokenCalledKeys.push(calledKey);
+
+                if (spokenCalledKeys.length > 100) {
+                    spokenCalledKeys = spokenCalledKeys.slice(-100);
+                }
+
+                localStorage.setItem('spoken_called_keys', JSON.stringify(spokenCalledKeys));
+
                 panggilSuara(mainNum, mainSvc);
-                previousMainNumber = mainNum;
             }
         }
     })
     .catch(err => {
         console.error('Gagal memuat data dashboard:', err);
+    })
+    .finally(() => {
+        isLoadingQueue = false;
     });
 }
 
@@ -477,16 +538,15 @@ function aktifkanAudio() {
     }
 
     document.getElementById('status-text').innerHTML = "Status: ✅ Suara Aktif";
-   
 }
-    document.addEventListener("keydown", aktifkanAudio, { once: true });
-    document.addEventListener("keydown", aktifkanAudio, { once: true });
-    document.addEventListener("click", aktifkanAudio, { once: true });
-    document.addEventListener("touchstart", aktifkanAudio, { once: true });
+
+document.addEventListener("keydown", aktifkanAudio, { once: true });
+document.addEventListener("click", aktifkanAudio, { once: true });
+document.addEventListener("touchstart", aktifkanAudio, { once: true });
 
 function autoRefreshAtMidnight() {
     let now = new Date();
-    let night = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1,0,0,1);
+    let night = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1);
     let ms = night - now;
 
     setTimeout(() => location.reload(true), ms);
@@ -515,28 +575,10 @@ channel.bind('pusher:subscription_succeeded', function() {
 
 channel.bind('AntreanUpdate', function(data) {
     console.log('Event AntreanUpdate diterima dashboard:', data);
-    loadQueue(true);
-});
 
-channel.bind('.AntreanUpdate', function(data) {
-    console.log('Event .AntreanUpdate diterima dashboard:', data);
-    loadQueue(true);
-});
-
-channel.bind('App\\Events\\AntreanUpdate', function(data) {
-    console.log('Event App\\Events\\AntreanUpdate diterima dashboard:', data);
-    loadQueue(true);
-});
-
-channel.bind_global(function(eventName, data) {
-    if (
-        eventName === 'AntreanUpdate' ||
-        eventName === '.AntreanUpdate' ||
-        eventName === 'App\\Events\\AntreanUpdate'
-    ) {
-        console.log('Global event dashboard:', eventName, data);
+    setTimeout(() => {
         loadQueue(true);
-    }
+    }, 300);
 });
 
 loadQueue(false);

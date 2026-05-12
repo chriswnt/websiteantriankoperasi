@@ -178,17 +178,34 @@
             transform: none;
         }
 
-        .message {
-            width: 100%;
-            max-width: 760px;
-            margin: 22px auto 0;
-            padding: 14px;
-            border-radius: 4px;
-            display: none;
-            font-weight: bold;
-            text-align: center;
-        }
+      .message {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    min-width: 320px;
+    max-width: 500px;
+    padding: 16px 24px;
+    border-radius: 10px;
+    display: none;
+    font-weight: bold;
+    text-align: center;
+    z-index: 9999;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+    animation: popupTop 0.25s ease;
+}
 
+@keyframes popupTop {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
         .success {
             background: #d9f4e3;
             color: #14532d;
@@ -363,13 +380,23 @@
 </div>
 
 <script>
+let messageTimer = null;
+
 function showMessage(type, text) {
     const box = document.getElementById('msgBox');
+
     box.className = 'message ' + type;
     box.style.display = 'block';
     box.innerText = text;
-}
 
+    if (messageTimer) {
+        clearTimeout(messageTimer);
+    }
+
+    messageTimer = setTimeout(() => {
+        box.style.display = 'none';
+    }, 2500);
+}
 function ambil(serviceId, btnEl) {
     const oldText = btnEl.innerHTML;
     btnEl.disabled = true;
@@ -393,6 +420,7 @@ function ambil(serviceId, btnEl) {
     .then(({ status, data }) => {
         if (status >= 200 && status < 300 && data.success) {
             showMessage('success', data.message || 'Nomor antrean berhasil diambil');
+            loadOfficerStatus();
         } else {
             showMessage('error', data.message || 'Gagal mengambil antrean');
         }
@@ -413,7 +441,7 @@ function loadOfficerStatus() {
             const wrapper = document.getElementById('officerStatus');
             wrapper.innerHTML = '';
 
-            if (!data || data.length === 0) {
+            if (!data) {
                 wrapper.innerHTML = `
                     <div class="officer">
                         <div class="officer-name">Belum ada antrean selesai</div>
@@ -424,12 +452,27 @@ function loadOfficerStatus() {
                 return;
             }
 
-            data.forEach(item => {
+            const services = [
+                {
+                    title: 'TELLER',
+                    data: data.teller
+                },
+                {
+                    title: 'ADMINISTRASI',
+                    data: data.administrasi
+                },
+                {
+                    title: 'PINJAMAN',
+                    data: data.pinjaman
+                }
+            ];
+
+            services.forEach(item => {
                 wrapper.innerHTML += `
                     <div class="officer">
-                        <div class="officer-name">${item.officer_name ?? 'Officer'}</div>
-                        <div class="officer-info">${item.service_name ?? 'Layanan'}</div>
-                        <div class="counter">${item.total_done}</div>
+                        <div class="officer-name">${item.title}</div>
+                        <div class="officer-info">${item.data && item.data.officer ? item.data.officer : '-'}</div>
+                        <div class="counter">${item.data && item.data.number ? item.data.number : '000'}</div>
                     </div>
                 `;
             });

@@ -32,6 +32,7 @@ Route::get('/dashboard/data', [DashboardController::class, 'data']);
 */
 Route::get('/ambil', [QueueController::class, 'index']);
 Route::post('/ambil', [QueueController::class, 'store']);
+Route::get('/queue-status', [DashboardController::class, 'queueStatus'])->name('queue.status');
 
 /*
 |--------------------------------------------------------------------------

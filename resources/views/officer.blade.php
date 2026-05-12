@@ -419,13 +419,15 @@
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 
 <script>
-    if ("Notification" in window) {
+if ("Notification" in window && Notification.permission === "default") {
     Notification.requestPermission();
 }
 
 let allQueues = [];
 let lastSeenQueueId = 0;
 let firstLoadOfficer = true;
+const loginOfficerId = {{ auth()->id() }};
+
 /* dropdown user */
 function toggleUserMenu() {
     const menu = document.getElementById('userDropdownMenu');
@@ -466,41 +468,42 @@ function loadOfficer() {
             return;
         }
 
-const totalQueue = data.total ?? 0;
-const queues = data.queues || [];
+        const totalQueue = data.total ?? 0;
+        const queues = data.queues || [];
 
-let newestQueueId = 0;
+        let newestQueueId = 0;
 
-queues.forEach(q => {
-    if (q.id > newestQueueId) {
-        newestQueueId = q.id;
-    }
-});
+        queues.forEach(q => {
+            if (q.id > newestQueueId) {
+                newestQueueId = q.id;
+            }
+        });
 
-if (firstLoadOfficer) {
-    lastSeenQueueId = newestQueueId;
-    firstLoadOfficer = false;
-} else {
-    const newQueues = queues.filter(q => q.id > lastSeenQueueId && q.status === 'waiting');
+        if (firstLoadOfficer) {
+            lastSeenQueueId = newestQueueId;
+            firstLoadOfficer = false;
+        } else {
+            const newQueues = queues.filter(q => q.id > lastSeenQueueId && q.status === 'waiting');
 
-    if (newQueues.length > 0) {
-        if ("Notification" in window && Notification.permission === "granted") {
-            new Notification("🔔 Antrean Baru!", {
-                body: `${newQueues.length} antrean baru masuk`,
-                icon: "/logo.png",
-                tag: "antrean-baru-" + Date.now(),
-                renotify: false
-            });
+            if (newQueues.length > 0) {
+                if ("Notification" in window && Notification.permission === "granted") {
+                    new Notification("🔔 Antrean Baru!", {
+                        body: `${newQueues.length} antrean baru masuk`,
+                        icon: "/logo.png",
+                        tag: "antrean-baru-" + Date.now(),
+                        renotify: true
+                    });
+                }
+
+                lastSeenQueueId = newestQueueId;
+            }
         }
 
-        lastSeenQueueId = newestQueueId;
-    }
-}
+        document.getElementById('total').innerText = totalQueue;
+        document.getElementById('remaining').innerText = data.remaining ?? 0;
+        document.getElementById('current').innerText = data.current ? (data.current.queue_number || data.current.id) : '-';
+        document.getElementById('next').innerText = data.next ? (data.next.queue_number || data.next.id) : '-';
 
-document.getElementById('total').innerText = totalQueue;
-document.getElementById('remaining').innerText = data.remaining ?? 0;
-document.getElementById('current').innerText = data.current ? (data.current.queue_number || data.current.id) : '-';
-document.getElementById('next').innerText = data.next ? (data.next.queue_number || data.next.id) : '-';
         allQueues = data.queues || [];
         renderTable(allQueues);
     })
@@ -538,15 +541,26 @@ function renderTable(data) {
         let aksiHtml = '';
         if (q.status === 'waiting') {
             aksiHtml = `<button class="btn btn-call" onclick="callQueue(${q.id}, this)">Panggil</button>`;
-   
-        }  else if (q.status === 'called') {
+        } else if (q.status === 'called') {
 
-    if (q.officer_id === {{ auth()->id() }}) {
-        aksiHtml = `<button class="btn btn-done" onclick="doneQueue(${q.id}, this)">Selesai</button>`;
-    } else {
-        aksiHtml = `<span style="color:#e74c3c; font-weight:bold;">Diproses officer lain</span>`;
-    }
-}
+            if (parseInt(q.officer_id) === parseInt(loginOfficerId)) {
+                aksiHtml = `<button class="btn btn-done" onclick="doneQueue(${q.id}, this)">Selesai</button>`;
+            } else {
+                aksiHtml = `
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+                        <button class="btn" disabled style="background:#e5e7eb !important; color:#9ca3af !important; cursor:not-allowed; opacity:1;">
+                            Selesai
+                        </button>
+                        <span style="color:#2c3e50; font-size:12px; font-weight:bold;">
+                            ${q.officer_name ?? '-'}
+                        </span>
+                    </div>
+                `;
+            }
+
+        } else {
+            aksiHtml = `<span style="color:#2ecc71; font-weight:bold;">✔ Selesai</span>`;
+        }
 
         // FIX: Langsung gunakan waktu yang sudah dikembalikan dan disamakan oleh Controller
         html += `
